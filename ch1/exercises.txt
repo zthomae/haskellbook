@@ -1,0 +1,97 @@
+Combinators
+
+1. \x.xxx
+
+This is a combinator, because it has no free variables.
+
+2. \xy.zx
+
+z is a free variable. Therefore, this is not a combinator.
+
+3. \xyz.xz(zx)
+
+This is a combinator.
+
+4. \xyz.xy(zxy)
+
+This is a combinator
+
+5. \xy.xy(zxy)
+
+This is not a combinator -- z is free
+
+---
+
+Normal form or diverge?
+
+1. \x.xxx
+
+This doesn't diverge, because there are no more reduction steps
+to take.
+
+2. (\z.zz)(\y.yy)
+
+Doing one step of beta reduction gives you
+
+(\y.yy)(\y.yy)
+
+which is alpha equivalent to the above. Therefore, this expression
+diverges. (Note that this is the same as the example with the
+omega term).
+
+3. (\x.xxx)z
+
+This reduces to zzz, which has no further application steps and thus
+does not diverge.
+
+---
+
+Beta reduction
+
+1. (\abc.cba)zz(\wv.w)
+
+(\bc.cbz)z(\wv.w)
+(\c.czz)(\wv.w)
+(\wv.w)zz
+(\v.z)
+z
+
+2. (\x.\y.xyy)(\a.a)b
+
+(\y.(\a.a)yy)b
+(\a.a)bb
+bb
+
+3. (\y.y)(\x.xx)(\z.zq)
+
+(\x.xx)(\z.zq)
+(\z.zq)(\z.zq)
+(\z.zq)q
+qq
+
+4. (\z.z)(\z.zz)(\z.zy)
+
+(\z.zz)(\z.zy)
+(\z.zy)(\z.zy)
+(\z.zy)y
+yy
+
+5. (\x.\y.xyy)(\y.y)y
+
+(\y.(\y.y)yy)y
+(\y.y)yy
+yy
+
+6. (\a.aa)(\b.ba)c
+
+(\b.ba)(\b.ba)c
+((\b.ba)a)c
+aac
+
+7. (\xyz.xz(yz))(\x.z)(\x.a)
+
+(\x.\y.\z'.xz'(yz'))(\x.z)(\x.a)
+(\y.\z'.(\x.z)z'(yz'))(\x.a)
+(\z'.(\x.z)(z')((\x.a)z'))
+(\z'.z((\x.a)z'))
+(\z'.za)

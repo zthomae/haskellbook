@@ -1,0 +1,50 @@
+Given a labmda expression, choose an answer that is
+equivalent
+
+1. \xy.xz
+
+a) \xz.xz
+
+In the given expression, z is a free variable. Here it is
+bound. The expressions are not equivalent.
+
+b) \mn.mz
+
+Here we have substituted x with m and y with n. z is still
+a free variable. This is equivalent.
+
+c) \z(\x.xz)
+
+This is equivalent to \zx.xz. It's clearly not the same.
+
+2. \xy.xxy
+
+a) \mn.mnp
+
+Creating an alpha-equivalent version of this expression using
+x and y will make it obvious that it is not the same:
+
+\xy.xyp
+
+b) \x(\y.xy)
+
+This is the desugared version of \xy.xy.
+
+\a(\b.aab)
+
+The original expression can be desugared to be
+\x(\y.xxy). The two expressions are clearly alpha-equivalent.
+
+3. \xyz.zx
+
+a) \x.(\y.(\z.z))
+
+Nope. z is not applied to x.
+
+b) \tos.st
+
+This is obviously alpha equivalent to the original.
+
+c) \mnp.mn
+
+This is equivalent to \xyz.xy -- clearly different.
