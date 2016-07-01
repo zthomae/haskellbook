@@ -1,0 +1,65 @@
+# Parenthesization
+
+Evaluate the following:
+
+1) 2 + 2 * 3 - 1
+
+2 + 6 - 1
+8 - 1
+7
+
+2) (^) 10 $ 1 + 1
+
+(^) 10 2
+100
+
+3) 2 ^ 2 * 4 ^ 5 + 1
+
+4 * 1024 + 1
+4096 + 1
+4097
+
+# Equivalent expressions
+
+Which of the following are equivalent?
+
+1)
+
+1 + 1
+2
+
+Equivalent
+
+2)
+
+10 ^ 2
+10 * 9 + 10
+
+Equivalent
+
+3)
+
+400 - 37
+(-) 37 400
+
+Not equivalent -- 400 - 37 != 37 - 400
+
+4)
+
+100 `div` 3
+100 / 3
+
+Not equivalent -- div returns an integer (33),
+/ does not (33.3333)
+
+5)
+
+2 * 5 + 10
+2 * (5 + 10)
+
+Not equivalent -- parentheses change precedence
+
+# Wax on, wax off
+
+-- is this what they want?
+waxOn z = x * 5 where y = z + 7; x = y ^ 2

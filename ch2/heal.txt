@@ -1,0 +1,28 @@
+1)
+
+let area x = 3. 14 * (x * x)
+
+The problem is the space between 3. and 14. Corrected:
+
+let area x = 3.14 * (x * x)
+
+2) let double x = b * 2
+
+The problem is that b is a free variable that is presumably
+not defined at the moment. It was intended to be x:
+
+let double x = x * 2
+
+3)
+
+x = 7
+ y = 10
+f = x + y
+
+The problem is that y is not indented at the same level
+as the other definitions. Correct it by unindenting it
+one space:
+
+x = 7
+y = 10
+f = x + y

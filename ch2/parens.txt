@@ -1,0 +1,21 @@
+1)
+
+a) 8 + 7 * 9
+b) (8 + 7) * 9
+
+Yes, the parens change the result -- * has precedence over +
+
+2)
+
+a) perimeter x y = (x * 2) + (y * 2)
+b) perimeter x y = x * 2 + y * 2
+
+No, the parens don't change the result
+
+3)
+
+a) f x = x / 2 + 9
+b) f x = x / (2 * 9)
+
+Yes, the parens change the result -- / has the same
+precedence as *, which is higher than +
