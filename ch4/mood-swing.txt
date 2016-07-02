@@ -1,0 +1,19 @@
+data Mood = Blah | Woot deriving Show
+
+1. The type constructor is Mood
+
+2. If a function requires a Mood argument,
+the values you could use are Blah and Woot.
+
+3. Suppose we have the type signature
+changeMood :: Mood -> Woot
+
+This is incorrect because Woot is a data
+constructor, not a type. The type of Woot
+is still Mood.
+
+4. To invert a mood:
+
+changeMood :: Mood -> Mood
+changeMood Blah = Woot
+changeMood _ = Blah

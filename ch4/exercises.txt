@@ -1,0 +1,144 @@
+awesome = ["Papuchon", "curry", ":)"]
+alsoAwesome = ["Quake", "The Simons"]
+allAwesome = [awesome, alsoAwesome]
+
+1. The type signature of length is
+length :: [a] -> Int
+
+2. The results of the following expressions:
+
+a) length [1, 2, 3, 4, 5] == 5
+
+b) length [(1, 2), (2, 3), (3, 4)] == 3
+
+c) length allAwesome == 2
+
+d) length (concat allAwesome) == 5
+
+3. (/) takes two Fractional numeric types.
+However, length returns an Int, which is not
+Fractional.
+
+4. To fix this, you can use div instead of /.
+div takes integral arguments.
+
+5. The expected type of 2 + 3 == 5 is Bool, and
+its value is True.
+
+6. The type and expected result value of
+
+let x = 5
+x + 3 == 5
+
+Are Bool and False
+
+7. Which of the following work?
+
+a) length allAwesome == 2
+
+This works, and is True.
+
+b) length [1, 'a', 3, 'b']
+
+This does not work, because the members of a list
+must all be of the same type.
+
+c) length allAwesome + length awesome
+
+This will work, and its result is 5.
+
+d) (8 == 8) && ('b' < 'a')
+
+This works, and its result is False.
+
+e) (8 == 8) && 9
+
+This does not work, because && cannot be
+applied to a Bool and an Int
+
+8. Write a function that tells you whether a given
+list is a palindrome.
+
+isPalindrome :: [a] -> Bool
+isPalindrome l = l == reverse l
+
+9. Write a function to return the absolute
+value of a number using if-then-else
+
+myAbs :: Integer -> Integer
+myAbs x = if x < 0 then -x else x
+
+10. Fill in the definition of the following
+function, using fst and snd:
+
+f :: (a, b) -> (c, d) -> ((b, d), (a, c))
+f x y = ((snd x, snd y), (fst x, fst y))
+
+# Correcting syntax
+
+1. We want a function that adds 1 to the length of
+a string argument and returns that result
+
+x = (+)
+F xs = w 'x' 1 where w = length xs
+
+x needs to be surrounded by backticks (`), not
+single quotes.
+
+2. This is supposed to be the identity function:
+
+Originally: \ X = x
+Should be: \x -> x
+
+3. This function should return 1 from the value
+[1, 2, 3]
+
+Originally: \ x : xs -> x
+Should be: \(x:xs) -> x
+
+When fixed, this function should return 1 from (1, 2)
+
+Originally: f (a b) = A
+Should be: f (a, b) = a
+Really should be: f = fst
+
+# Match the function names to their types
+
+1. Which of the following types is the type of show?
+
+a) show a => a -> String
+b) Show a -> a -> String
+c) Show a => a -> String
+
+Show is a typeclass, so it needs the typeclass
+restriction Show a => ...
+
+The only possible answer is (c), which makes
+sense.
+
+2. Which of the following is the type of (==)?
+
+a) a -> a -> Bool
+b) Eq a => a -> a -> Bool
+c) Eq a -> a -> a -> Bool
+d) Eq a => A -> Bool
+
+c, obviously
+
+3. fst
+
+a) (a, b) -> a
+b) b -> a
+c) (a, b) -> b
+
+The answer is (a). (b) is absurd and (c) is snd.
+
+4. (+)
+
+a) Num a -> a -> a -> Bool
+b) Num a => a -> a -> Bool
+c) num a => a -> a -> a
+d) Num a => a -> a -> a
+e) a -> a -> a
+
+(d).

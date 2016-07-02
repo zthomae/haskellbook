@@ -1,0 +1,25 @@
+1. not True && true
+
+True is a data constructor, and must be
+capitalized. true is an error
+
+2. not (x = 6)
+
+== compares Num instances. x = 6 is an error.
+
+3. (1 * 2) > 5
+
+Not broken.
+
+4. [Merry] > [Happy]
+
+Unless Merry and Happy are defined as data
+constructors for a type implementing the Ord
+typeclass, this is broken. The intention is
+probably to compare the lists containing the
+strings "Merry" and "Happy"
+
+5. [1, 2, 3] ++ "look at me!"
+
+This is a type error -- you can't concatenate
+lists of different types.
