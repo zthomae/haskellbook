@@ -1,0 +1,29 @@
+1. Suppose you have the following REPL session:
+
+let x = 5
+let y = 7
+let z = x + y
+
+Is y in scope for z? Yes.
+
+2.
+
+let f = 3
+let g = 6 * f + h
+
+Is h in scope for g? No.
+
+3. Is everything we need to execute area in scope?
+
+area d = pi * (r * r)
+r = d / 2
+
+Even though r is defined after area, it is in scope.
+However, d is not in scope for the definition of r.
+
+4. Suppose we fix it:
+
+area d = pi * (r * r)
+  where r = d / 2
+
+Now everything we need is in scope.

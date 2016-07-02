@@ -1,0 +1,16 @@
+Decide whether the following will compile.
+
+1. ++ [1,2,3] [4,5,6]
+
+No -- to use ++ as a prefix, it must be surrounded
+by parentheses.
+
+2. '<3' ++ ' Haskell'
+
+Yes.
+
+3. concat ["<3", " Haskell"]
+
+We pass concat a list of lists (of chars), and it
+combines them to form a single list of chars. This
+compiles.

@@ -1,0 +1,114 @@
+# Reading syntax
+
+1. Determine if the following lines are written correctly.
+
+a) concat [[1, 2, 3], [4, 5, 6]]
+
+Yes.
+
+b) ++ [1, 2, 3] [4, 5, 6]
+
+No -- ++ needs to be wrapped in parentheses
+
+c) (++) "hello" " world"
+
+Yes.
+
+d) ["hello" ++ "world]
+
+No -- we are missing a closing double quote at the
+end of world
+
+e) 4 !! "hello"
+
+No -- !! applies to a list, not a num
+
+f) (!!) "hello" 4
+
+Yes.
+
+g) take "4 lovely"
+
+No -- we included the first argument to take inside
+the quotes.
+
+h) take 3 "awesome"
+
+Yes.
+
+2. Match each result to a line creating it.
+
+a) concat [[1 * 6], [2 * 6], [3 * 6]]
+
+=> [6, 12, 18] (d)
+
+b) "rain" ++ drop 2 "elbow"
+
+=> "rainbow" (c)
+
+c) 10 * head [1, 2, 3]
+
+=> 10 (e)
+
+d) (take 3 "Julie") ++ (tail "yes")
+
+=> "Jules" (a)
+
+e) concat [tail [1, 2, 3],
+           tail [4, 5, 6],
+           tail [7, 8, 9]]
+
+=> [2, 3, 5, 6, 8, 9] (b) (don't forget the concat!)
+
+# Building functions
+
+a) "Curry is awesome" ++ "!"
+
+More generally,
+
+makeExciting s = s ++ "!"
+
+b) "Curry is awesome!" !! 4
+
+The function we would write would just be !! -- this
+is perfectly general. However, we could also write
+!! in terms of take and drop:
+
+not!! s i = drop i $ take (i + 1) s
+
+c) drop 9 "Curry is awesome!"
+
+This function generalizes to just drop, unless you
+also want to match the semantics of getting the last
+word and not just dropping a certain number of letters.
+
+To write a function to get the third character in a
+string, just do this
+
+thirdLetter :: [Char] -> Char
+thirdLetter = (!! 3)
+
+We can generalize this a bit, but it's a bit useless:
+nthLetter :: Int -> [Char] -> Char
+nthLetter i = (!! i)
+
+That might be a bit too tricky for this far in the
+book, but I've been here before.
+
+As for the reverse:
+
+letterIndex :: Int -> Char
+letterIndex = ("Curry is awesome"! !!)
+
+However, note that generalizing this just leaves
+us with !!, because we're supplying arguments in
+the same order. In fact, !! is better because it's
+more general, applying to any list and not just
+to a list of characters.
+
+Now to reverse the words of the string (and only the
+string) "Curry is awesome",
+
+rvrs :: [Char] -> [Char]
+rvrs = (drop 9 s) ++ (take 4 (drop 5 s)) ++ (take 5 s)
+  where s = "Curry is awesome"
