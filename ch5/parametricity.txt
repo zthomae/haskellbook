@@ -1,0 +1,14 @@
+2. The two functions with the type
+
+a -> a -> a
+
+a) f a b = a
+b) f a b = b
+
+3. Only one function can have the type a -> b -> b:
+
+f a b = b
+
+It does not matter what a and b are, or whether they are
+the same or different. No other function can have that
+type.

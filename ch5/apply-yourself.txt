@@ -1,0 +1,29 @@
+1. (++) :: [a] -> [a] -> [a]
+
+myConcat x = x ++ " yo"
+
+The type of myConcat is [Char] -> [Char]
+
+2. (*) :: Num a => a -> a -> a
+
+myMult x = (x / 3) * 5
+
+The type of myMult is Fractional a => a -> a (because of /)
+
+3. take :: Int -> [a] -> [a]
+
+myTake x = take x "hey you"
+
+The type of myTake is Int -> [Char]
+
+4. (>) :: Ord a => a -> a -> Bool
+
+myCom x = x > (length [1..100])
+
+The type of myCom is Int -> Bool (length returns an Int)
+
+5. (<) :: Ord a => a -> a -> Bool
+
+myAlph x = x < 'z'
+
+The type of myAlph is Char -> Bool

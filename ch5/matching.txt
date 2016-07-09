@@ -1,0 +1,22 @@
+Match the following functions to their
+type signatures:
+
+Functions:
+a) not
+b) length
+c) concat
+d) head
+e) (<)
+
+Type signatures:
+a) _ :: [a] -> a
+b) _ :: [[a]] -> [a]
+c) _ :: Bool -> Bool
+d) _ :: [a] -> Int
+e) _ :: Ord a => a -> a -> Bool
+
+a) not :: Bool -> Bool
+b) length :: [a] -> Int
+c) concat :: [[a]] -> [a]
+d) head :: [a] -> a
+e) (<) :: Ord a => a -> a -> Bool

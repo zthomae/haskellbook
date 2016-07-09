@@ -1,0 +1,97 @@
+Given a function and its type, say which type results
+from applying some or all o f the arguments.
+
+1. If the type of f is a -> a -> a -> a, and the
+type of x is Char then the type of f x is
+
+a) Char -> Char -> Char
+
+We have applied one argument. Because all of the types
+of the arguments are constrained to be the same type,
+applying an argument of type Char constrains every a
+to be a Char.
+
+2. If the type of g is a -> b -> c -> b, then
+the type of g 0 'c' "woot" is
+
+d) Char
+
+We are applying three arguments, and the result type
+is of the same type as the second argument. This
+argument is a Char.
+
+3. If the type of h is (Num a, Num b) => a -> b -> b,
+then the type of h 1.0 2 is
+
+d) Num b => b
+
+Compare to:
+
+h' :: (Num a, Num b) => a -> b -> a
+h' a b = a
+h' 1.0 2 :: Fractional a => a
+
+It appears to be opting for the most restrictive
+type class is can prove to be correct. With a 1.0,
+this is definitely a Fractional number, but a 2
+may not be.
+
+4. If the type of h is (Num a, Num b) => a -> b -> b,
+then the type of h 1 (5.5 :: Double) is
+
+c) Double
+
+We have specified an explicit type, so we no longer
+need to "constrain" the type with a typeclass -- we
+know exactly what it is.
+
+5. If the type of jackal is (Ord a, Eq b) => a -> b -> a,
+then the type of
+
+jackal "keyboard" "has the word jackal in it"
+
+is
+
+a) [Char]
+
+This is similar to the above, only with a different
+function name and different typeclass constraints.
+
+6. The type of jackal "keyboard" is
+
+e) Eq b -> b -> [Char]
+
+We haven't applied the second argument and have no
+more specific type information than the typeclass in
+the type declaration, but we do know that type a
+is [Char]
+
+7. If the type of kessel is
+
+(Ord a, Num b) => a -> b -> a, then the type of
+kessel 1 2 is
+
+d) (Num a, Ord a) => a
+
+This is interesting. We can see that
+
+Prelude > :t 1
+1 :: Num a => a
+
+So it looks like it adds this typeclass constraint
+that it knows about to the one that is specified in
+the function type declaration (which it can do
+because there's an instance of Ord for Num).
+
+8. If the type of kessel is (Ord a, Num b) => a -> b -> a,
+then the type of kessel 1 (2 :: Integer) is (still)
+
+a) (Num a, Ord a) => a
+
+9. If the type of kessel is (Ord a, Num b) => a -> b -> a,
+then the type of kessel (1 :: Integer) 2 is
+
+c) Integer
+
+By explicitly giving 1 a concrete type of Integer, we now
+have a concrete type for the result of the expression.

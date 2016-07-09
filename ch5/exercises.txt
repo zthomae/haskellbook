@@ -1,0 +1,306 @@
+# Multiple choice
+
+1. A value of type [a] is
+
+c) a list whose elements are all of some type a
+
+2. A function of type [[a]] -> [a] could
+
+a) take a list of strings as an argument ([[Char]])
+
+3. A function of type [a] -> Int -> a
+
+b) returns one element of type a from a list
+
+4. A function of type (a, b) -> a
+
+c) takes a tuple argument and returns the first value
+
+# Determining the type
+
+1. All function applications return a value. Determine the
+value returned by these and the type of that value
+
+a) (* 9) 6
+54 :: Num a => a
+
+b) head [(0,"doge"),(1,"kitteh")]
+(0,"doge") :: (Num a => a, String)
+
+c) head [(0 :: Integer,"doge"),(1,"kitteh")]
+(0, "doge") :: (Integer, String)
+
+d) if False then True else False
+False :: Bool
+
+e) length [1, 2, 3, 4, 5]
+5 :: Int
+
+f) (length [1, 2, 3, 4]) > (length "TACOCAT")
+False :: Bool
+
+2. What is the type of w?
+
+x = 5
+y = x + 5
+w = y * 10
+
+Num a => a
+
+3. What is the type of z?
+
+x = 5
+y = x + 5
+z y = y * 10
+
+Num a => a -> a
+
+4. What is the type of f?
+
+x = 5
+y = x + 5
+f = 4 / y
+
+Fraction a => a
+
+5. What is the type of f?
+
+x = "Julie"
+y = " <3 "
+z = "Haskell"
+f = x ++ y ++ z
+
+String
+
+# Does it compile?
+
+1.
+
+bigNum = (^) 5 $ 10
+wahoo = bignum $ 10
+
+It shouldn't compile. bigNum is a number, not a function.
+(To be precise, bigNum is a Num a => a).
+
+2.
+
+x = print
+y = print "woohoo!"
+z = x "hello world"
+
+This should be fine
+
+3.
+
+a = (+)
+b = 4
+c = b 10
+d = c 200
+
+This won't compile. c is defined as the application of 10
+to b, but b is a Num, not a function.
+
+It's not clear what the intention is, but you could replace
+the b in the definition of c and the c in the definition
+of b with a.
+
+4.
+
+a = 12 + b
+b = 10000 * c
+
+This shouldn't compile because c is not defined.
+You could fix it like this:
+
+b c = 10000 * c
+
+# Type variable or specific type constructor?
+
+1You will be shown a type declaration, and you should
+categorize each type. The choices are:
+
+a) fully polymorphic type variable
+b) constrained polymorphic type variable
+c) concrete type constructor
+
+Example:
+
+f :: Num a => a -> b -> Int -> Int
+             [0]  [1]   [2]    [3]
+
+The answers are
+
+0) constrained polymorphic
+1) fully polymorphic
+2) concrete
+3) concrete
+
+f :: zed -> Zed -> Blah
+
+zed: fully polymorphic
+Zed: concrete
+Blah: concrete
+
+f :: Enum b => a -> b -> C
+
+a: fully polymorphic
+b: constrained polymorphic
+C: concrete
+
+f :: f -> g -> C
+
+f: fully polymorphic
+g: fully polymorphic
+C: concrete
+
+# Write a type signature
+
+1.
+
+functionH :: [a] -> a
+functionH (x:_) = x
+
+2.
+
+functionC :: Ord a => a -> a -> Bool
+functionC x y = if (x > y) then True else False
+
+3.
+
+functionS :: (a, b) -> b
+functionS (x, y) = y
+
+# Given a type, write a function
+
+1.
+
+i :: a -> a
+i x = x
+
+2.
+
+c :: a -> b -> a
+c x y = x
+
+3.
+
+c'' :: b -> a -> b
+c'' x y = x
+
+Yes, c'' and c are the same thing
+
+4.
+
+c' :: a -> b -> b
+c' x y = y
+
+5.
+
+r :: [a] -> [a]
+r lst = lst
+r (fst:rst) = rst
+r lst = reverse lst
+...
+
+6.
+
+co :: (b -> c) -> (a -> b) -> (a -> c)
+co f g = f . g
+
+7.
+
+a :: (a -> c) -> a -> a
+a f x = x
+
+8.
+
+a' :: (a -> b) -> a -> b
+a' f x = f x
+
+# Fix it
+
+1.
+
+module Sing where
+
+fstString :: [Char] -> [Char]
+fstString x = x ++ " in the rain"
+
+sndString :: [Char] -> [Char]
+sndString x = x ++ " over the rainbow"
+
+sing = if (x > y) then fstString x else sndString y
+  where x = "Singin"
+        y = "Somewhere"
+
+You can prove that this works by running sing.hs in
+this directory.
+
+2. To switch which song is sung, there are, among others,
+two things you could do:
+
+1) change the condition to x < y
+2) make sing a function taking a parameter choosing the
+song to sing:
+
+sing b = if b then fstString "Singing" else sndString "Somewhere"
+
+3.
+
+module Arith3Fixed where
+
+main :: IO ()
+main = do
+  print (1 + 2)
+  putStrLn "10"
+  print (negate (-1))
+  print ((+) 0 blah)
+    where blah = negate 1
+
+# Type-Kwon-Do
+
+1.
+
+f :: Int -> String
+f = undefined
+
+g :: String -> Char
+g = undefined
+
+h :: Int -> Char
+h = g . f
+
+2.
+
+data A
+data B
+data C
+
+q :: A -> B
+q = undefined
+
+w :: B -> C
+w = undefined
+
+e :: A -> C
+e = w . q
+
+3.
+
+data X
+data Y
+data Z
+
+xz :: X -> Z
+xz = undefined
+
+yz :: Y -> Z
+yz = undefined
+
+xform :: (X, Y) -> (Z, Z)
+xform (x,y) = (xz x, yz x)
+
+4.
+
+munge :: (x -> y) -> (y -> (w, z)) -> x -> w
+munge xy ywz = fst . ywz . xy
