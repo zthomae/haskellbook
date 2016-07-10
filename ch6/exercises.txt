@@ -1,0 +1,211 @@
+# Multiple choice
+
+1. The Eq class
+
+c) makes equality tests possible
+
+2. The typeclass Ord
+
+b) is a subclass of Eq
+
+3. Suppose the typeclass Ord has an operator >. What is
+the type of >?
+
+a) Ord a => a -> a -> Bool
+
+4. In x = divMod 16 12
+
+c) the type of x is a tuple
+
+5. The typeclass Integral includes
+
+a) Int and Integer numbers
+
+# Does it typecheck?
+
+1. data Person = Person Bool
+
+printPerson :: Person -> IO ()
+printPerson person = putStrLn (show person)
+
+This should not work, because Person does not derive or
+implement Show. This is easy to fix:
+
+data Person = Person Bool deriving Show
+
+2. data Mood = Blah | Woot deriving Show
+
+settleDown x = if x == Woot then Blah else x
+
+This won't type check, because Mood doesn't derive Eq. This
+is easy to fix:
+
+data Mood = Blah | Woot deriving (Eq, Show)
+
+3.
+
+a) The acceptable inputs to settleDown are Blah and Woot
+b) If I try to run settleDown 9, I will get a type error
+because I can't check for equality with 9 and Woot
+c) If I run Blah > Woot, I will get a type error, because
+I only derived Eq. If I had derived Ord instead (which implies
+Eq), this would.
+
+4.
+
+type Subject = String
+type Verb = String
+type Object = String
+
+data Sentence =
+  Sentence Subject Verb Object
+  deriving (Eq, Show)
+
+s1 = Sentence "dogs" "drool"
+s2 = Sentence "Julie" "loves" "dogs"
+
+This _does_ compile. Sentence _is a function_ -- all we're doing
+is partially applying it.
+
+# Given a datatype declaration, what can we do?
+
+data Rocks = Rocks String deriving (Eq, Show)
+data Yeah = Yeah Bool deriving (Eq, Show)
+data Papu = Papu Rocks Yeah deriving (Eq, Show)
+
+Which of the following will typecheck?
+
+1. phew = Papu "chases" true
+
+Nope.
+
+1) true should be True
+2) "chases" and True need to be wrapped in Rocks and Yeah,
+respectively. This works:
+
+phew = Papu (Rocks "chases") (Yeah True)
+
+2. truth = Papu (Rocks "chomskydoz") (Yeah True)
+
+This works -- see above.
+
+3. equalityForAll :: Papu -> Papu -> Bool
+equalityForAll p p' = p == p'
+
+Papu derives Eq, so this works.
+
+4. comparePapus :: Papu -> Papu -> Bool
+comparePapus p p' = p > p'
+
+This does not work -- Eq does not imply Ord operations.
+
+# Match the types
+
+Given two types and their implementations, determine
+whether you can substitute the second type for the first.
+
+1.
+
+i :: Num a => a
+i = 1
+
+Alternatively, i :: a
+
+This will not work, because a is not defined. Nice try.
+
+2.
+
+f :: Float
+f = 1.0
+
+Alternatively, f :: Num a => a
+
+This will _not_ work. You cannot force something to have a
+more general type, and Num is more general than Fractional,
+which is how 1.0 is interpreted. (I think this is right...).
+
+You get the same error as if you do:
+
+f :: Num a => a -> a
+f x = 1.0 + x
+
+3. Alternatively, f :: Fractional a => a
+
+This _will_ work.
+
+4. Alternatively, f :: RealFrac a => a
+
+This works -- RealFrac is a subset of Fractional.
+
+5.
+
+freud :: a -> a
+freud x = x
+
+freud :: Ord a => a -> a
+
+This works -- you can force a value to have a more restrictive
+type.
+
+6. Alternatively, freud :: Int -> Int
+
+This also works -- it doesn't matter that the type is concrete
+instead of polymorphic.
+
+7.
+
+myX = 1 :: Int
+
+sigmund :: Int -> Int
+sigmund x = myX
+
+Alternatively, sigmund :: a -> a
+
+This does not work because sigmund always returns an Int.
+The return value is not polymorphic at all.
+
+8. Alternatively, sigmund :: Num a => a -> a
+
+See above -- sigmund _ is not polymorphic -- neither
+fully nor constrained.
+
+9.
+
+jung :: Ord a => [a] -> a
+jung xs = head (sort xs)
+
+Alternatively, jung :: [Int] -> Int
+
+This works -- Int is an instance of Ord
+
+10.
+
+young :: [Char] -> Char
+young xs = head (sort xs)
+
+Alternatively, young :: Ord a => [a] -> a
+
+This works -- all of the operations in young are defined
+for Ord, which Char is a member of.
+
+11.
+
+mySort :: [Char] -> [Char]
+mySort = sort
+
+signifier :: [Char] -> Char
+signifier xs = head (mySort xs)
+
+Alternatively, signifier :: Ord a => [a] -> a
+
+Even though sort is defined on Ord, mySort is only defined
+on Char. This means that the broader type for signifier
+will fail, because not all a in Ord a can be used.
+
+# Type-Kwon-Do Two: Electric Typealoo
+
+1. chk :: Eq b => (a -> b) -> a -> b -> Bool
+chk f a b = (f a) == b
+
+2. arith :: Num b => (a -> b) -> Integer -> a -> b
+arith f i a = (fromInteger i) + (f a)
