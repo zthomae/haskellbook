@@ -1,0 +1,72 @@
+# Review of types
+
+1. What is the type signature of [[True, False], [True, True], [False, True]]?
+
+d) [[Bool]]
+
+2. Which of the following has the same type as the above?
+
+b) [[3 == 3], [6 > 5], [3 < 4]]
+
+3. For the following function:
+
+func :: [a] -> [a] -> [a]
+func x y = x ++ y
+
+which of the following is true?
+
+d) x and y must be of the same type, x and y must be lists, and if
+x is a String then y must be a String
+
+4. For the func code above, which is a valid application of func to
+both of its arguments?
+
+b) func "Hello" "World"
+
+# Reviewing currying
+
+Given the following definitions, tell us what value results from
+further applications
+
+cattyConny :: String -> String -> String
+cattyConny x y = x ++ " mrow " ++ y
+
+flippy :: String -> String -> String
+flippy = flip cattyConny
+
+appedCatty :: String -> String
+appedCatty = cattyConny "woops"
+
+frappe :: String -> String
+frappe = flippy "haha"
+
+1. What is the value of appedCatty "woohoo!"?
+
+"woops mrow woohoo!"
+
+2. frappe "1"
+
+"1 mrow haha"
+
+3. frappe (appedCatty "2")
+
+"woops mrow 2 mrow haha"
+
+4. appedCatty (frappe "blue")
+
+"woops mrow blue mrow haha"
+
+5. cattyConny (frappe "pink")
+              (cattyConny "green" (appedCatty "blue"))
+
+cattyConny "pink mrow haha" "green mrow woops mrow haha"
+-> "pink mrow haha mrow green mrow wops mrow haha"
+
+6. cattyConny (flippy "Pugs" "are") "awesome"
+
+cattyConny "are mrow Pugs" "awesome"
+-> "are mrow Pugs mrow awesome"
+
+# Recursion
+
+...
