@@ -1,0 +1,45 @@
+avgGrade :: (Fractional a, Ord a) => a -> Char
+avgGrade x
+  | y >= 0.9 = 'A'
+  | y >= 0.8 = 'B'
+  | y >= 0.7 = 'C'
+  | y >= 0.59 = 'D'
+  | y < 0.59 = 'F'
+  where y = x / 100
+
+1. Yeah, you don't want to push the otherwise case
+first. The result of a guard expression is the result
+of the first case whose guard clause returns true, and
+since the otherwise case is always true, this always
+determines the answer.
+
+2. If you reorder the guards, you will get the same
+answer, because they are all mutually exclusive.
+
+3. Suppose we have the following function:
+
+pal xs
+  | xs == reverse xs = True
+  | otherwise        = False
+
+b) True when xs is a palindrome
+
+4. pal can take any list (the type of reverse is [a] -> [a])
+
+5. The type of the function pal is [a] -> Bool
+
+6. Suppose we have the following function:
+
+numbers x
+  | x < 0 = -1
+  | x == 0 = 0
+  | x > 0 = 1
+
+c) an indication of whether its argument is a positive or
+negative number or zero (note: this function is equivalent
+to signum)
+
+7. Numbers can take any Ord a => a
+
+8. The type of the function numbers is
+(Num a, Num a1, Ord a1) => a1 -> a

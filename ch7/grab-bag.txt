@@ -1,0 +1,39 @@
+1. Which of the following are equivalent?
+
+a) mTh x y z = x * y * z
+b) mTh x y = \z -> x * y * z
+c) mTh x = \y -> \z -> x * y * z
+d) mTh = \x -> \y -> \z -> x * y * z
+
+They are all equivalent -- we are making the implicit
+currying in the original definition more explicit
+one parameter at a time.
+
+2. The type of mTh is Num a => a -> a -> a -> a.
+The type of mTh 3 is
+
+b) Num a => a -> a -> a.
+
+3 is most generically represented as Num a => a,
+and we've applied one parameter.
+
+3. Transforming between named and anymous functions:
+
+a) Make the f function in the where clause anonymous:
+
+addOneIfOdd n = case odd n of
+  True -> f n
+  False -> n
+  where f n = n + 1
+
+Alternatively, where f = \n -> n + 1
+
+b) addFive x y = (if x > y then y else x) + 5
+
+Alternatively, addFive = \x -> \y -> (if x > y then y else x) + 5
+
+c) Rewrite so that it is named:
+
+mflip f = \x -> \y -> f y x
+
+Alternatively, mflip f x y = f y x

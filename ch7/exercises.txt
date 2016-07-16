@@ -1,0 +1,73 @@
+# Multiple choice
+
+1. A polymorphic function
+
+d) may resolve to values of different types, depending
+on inputs
+
+2. Two functions named f and g have types Char -> String
+and String -> [String], respectively. The composed function
+g . f has the type
+
+b) Char -> [String]
+
+3. A function f has the type Ord a => a -> a -> Bool and
+we apply it to one numeric value. What is the type now?
+
+d) (Ord a, Num a) => a -> Bool
+
+Verified in the REPL:
+
+let f :: Ord a => a -> a -> Bool; f = undefined
+:t f 1
+
+4. A function with the type (a -> b) -> c
+
+b) is a higher-order function
+
+5. Given the following definition of f, what is the type
+of f True?
+
+f :: a -> a
+f x = x
+
+a) f True :: Bool
+
+# Let's write code
+
+1. The following function returns the tens digit of an integral
+argument
+
+tensDigit :: Integral a => a -> a
+tensDigit x = d
+  where xLast = x `div` 10
+        d = xLast `mod` 10
+
+a) rewriting with divMod:
+
+This?
+
+tensDigit' x = snd $ divMod (div x 10) 10
+
+b) tensDigit' does have the same type as tensDigit
+
+c) A silly implementation:
+
+hunsD x = (fst $ divMod (div x 10) 10) `mod` 10
+
+2. Implement the function of the type a -> a -> Bool -> a
+once each using a case expression and once with a guard
+
+foldBool :: a -> a -> Bool -> a
+foldBool x y b = case b of
+  True -> x
+  False -> y
+
+foldBool x y b
+  | b == True = x
+  | otherwise = y
+
+3. Fill in the definition.
+
+g :: (a -> b) -> (a, c) -> (b, c)
+g ab (a, c) = (ab a, c)
