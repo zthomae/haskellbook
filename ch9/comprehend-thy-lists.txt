@@ -1,0 +1,32 @@
+Take a look at the following functions, figure what you think the output
+lists will be, and then run them in your REPL to verify.
+
+mySqr = [x^2 | x <- [1..5]]
+
+1. [x | x <- mySqr, rem x 2 == 0]
+
+[4, 16]
+
+2. [(x, y) | x <- mySqr, y <- mySqr, x < 50, y > 500]
+
+[] -- there are no elements of mySqr greater than 500!
+
+3. take 5 [ (x, y) | x <- mySqr, y <- mySqr, x < 50, y > 50]
+
+[], like above. Am I missing something?
+
+---
+
+Yes -- it should be x <- [1..10]. Doing them again:
+
+1. [x | x <- mySqr, rem x 2 == 0]
+
+[4, 16, 36, 64, 100]
+
+2. [(x, y) | x <- mySqr, y <- mySqr, x < 50, y > 500]
+
+[]
+
+3. take 5 [ (x, y) | x <- mySqr, y <- mySqr, x < 50, y > 50]
+
+[(1, 64), (1, 81), (1, 100), (4, 64), (4, 81)]
