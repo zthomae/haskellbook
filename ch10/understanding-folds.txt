@@ -1,0 +1,78 @@
+1. foldr (*) 1 [1..5] will return the same result as
+
+b) foldl (flip (*)) 1 [1..5]
+c) foldl (*) 1 [1..5]
+
+The reason is that multiplication is commutative and associative
+
+2. Write out the evaluatoin steps for
+
+foldl (flip (*)) 1 [1..3]
+
+f = flip (*)
+foldl f 1 [1, 2, 3]
+foldl f (1 `f` 1) [2, 3]
+foldl f ((1 `f` 1) `f` 2) [3]
+foldl f (((1 `f` 1) `f` 2) `f` 3) []
+(((1 `f` 1) `f` 2) `f` 3)
+((1 `f` 2) `f` 3)
+(2 `f` 3)
+6
+
+3. One difference between foldr and foldl is
+
+c) foldr, but not foldl, associates to the right
+
+The following were _not_ correct:
+
+a) foldr, but not foldl, traverses the spin of a list from
+right to left.
+
+This is wrong -- folds always traverse the list in the same
+order
+
+b) foldr, but not foldl, always forces the rest of the list
+
+This is wrong. The only part of the list forced is the first
+cons cell.
+
+d) foldr, but not foldl, is recursive
+
+As we've seen, both definitions are recursive
+
+4. Folds are catamorphisms, which means they are generally used to
+
+a) reduce structure
+
+5. The following are simple folds with at least one error. Please
+fix them
+
+a) foldr (++) ["woot", "WOOT", "woot"]
+
+This fold has only supplied 2 of the 3 necessary arguments. One of
+two things is wrong:
+
+- We forgot the base value, [] (this is most likely)
+- We forgot to supply a list of a list of strings as a second argument
+
+b) foldr max [] "fear is the little death"
+
+[] is not a value argument to max. What we probably want is something
+like '\0' (which works!)
+
+c) foldr and True [False, True]
+
+(&&) is the function we want. Observe:
+
+Prelude> :t and
+and :: Foldable t => t Bool -> Bool
+
+Prelude> :t (&&)
+(&&) :: Bool -> Bool -> Bool
+
+We don't want a function that takes a list -- we want a function that
+takes two Bools.
+
+d) foldr (||) True [False, True]
+
+It looks like this will always return True (unless it evaluates bottom).
