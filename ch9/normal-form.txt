@@ -1,0 +1,41 @@
+Determine whether each of the following are in
+
+1) normal form, which implies weak head normal form
+2) weak head normal form only, or
+3) neither
+
+Remember that an expression cannot be in normal form
+or weak head normal form if the outermost part of
+the expression isn't a data constructor. It can't be
+in normal form if any part of the expression is
+unevaluated.
+
+NOTE TO SELF: I don't think I entirely understand this.
+
+1. [1, 2, 3, 4, 5]
+
+normal form
+
+2. 1 : 2 : 3 : 4 : _
+
+weak head normal form
+
+3. enumFromTo 1 10
+
+neither. what it evaluates to is in weak head normal form.
+
+4. length [1, 2, 3, 4, 5]
+
+neither
+
+5. sum (enumFromTo 1 10)
+
+neither.
+
+6. ['a'..'m'] ++ ['n'..'z']
+
+neither
+
+7. (_, 'b')
+
+weak head normal form (, is the data constructor)

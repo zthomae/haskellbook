@@ -1,0 +1,125 @@
+# Data.Char
+
+1.
+
+isUpper :: Char -> Bool
+toUpper :: Char -> Char
+
+2. Write a function to filter all the uppercase
+letters out of a string
+
+onlyUpper s = filter isUpper s
+
+3. Write a function that will capitalize the first
+letter of a string and return the entire string
+
+titleCase s :: String -> String
+titleCase [] = []
+titleCase c:cs = (toUpper c) : cs
+
+4. Now make a new version of that function that is
+recursive
+
+Note: I already had a base case...good habits die hard?
+
+upperCase s :: String -> String
+upperCase [] = []
+upperCase c:cs = (toUpper c) : upperCase cs
+
+This is dumb, though. What we should actually do is
+
+upperCase = map toUpper
+
+5. Write a function that will capitalize the first
+letter of a String and return only that letter
+as the result
+
+firstUpper :: String -> Char
+firstUpper (c:cs) = toUpper c
+
+6. Now rewrite it as a composed function (and, just
+to get it out of the way now, pointfree)
+
+firstUpper = toUpper . head
+
+# Ciphers
+
+See cipher.hs
+
+# Write your own standard functions
+
+myAnd :: [Bool] -> Bool
+myAnd [] = True
+myAnd (x:xs) = if x == False then False else myAnd xs
+
+or
+
+myAnd (x:xs) = x && myAnd xs
+
+1.
+
+myOr :: [Bool] -> Bool
+myOr [] = False
+myOr (x:xs) = x || myOr xs
+
+2.
+
+myAny :: (a -> Bool) -> [a] -> Bool
+myAny _ [] = False
+myAny f (x:xs) = (f x) || myAny f xs
+
+3.
+
+myElem :: Eq a => a -> [a] -> Bool
+myElem x = myAny (==x)
+
+4.
+
+We have to flip (:) because the list needs to be
+the first argument
+
+myReverse :: [a] -> [a]
+myReverse = foldl (flip (:)) []
+
+5.
+
+squish :: [[a]] -> [a]
+squish [] = []
+squish (l:ls) = l ++ squish ls
+
+6.
+
+squishMap :: (a -> [b]) -> [a] -> [b]
+squishMap _ [] = []
+squishMap f (l:ls) = (f l) ++ squishMap f ls
+
+7.
+
+squishAgain :: [[a]] -> [a]
+squishAgain = squishMap id
+
+8. This seems awkward to me...
+
+myMaximumBy :: (a -> a -> Ordering) -> [a] -> a
+myMaximumBy _ (a:[]) = a
+myMaximumBy f (a:as) =
+  let m = (myMaximumBy f as) in
+    case (f a m) of
+      GT -> a
+      _ -> m
+
+9.
+
+myMinimumBy :: (a -> a -> Ordering) -> [a] -> a
+myMinimumBy _ (a:[]) = a
+myMinimumBy f (a:as) =
+  let m = (myMinimumBy f as) in
+    case (f a m) of
+      LT -> a
+      _ -> m
+
+myMaximum :: (Ord a) => [a] -> a
+myMaximum = myMaximumBy compare
+
+myMinimum :: (Ord a) => [a] -> a
+myMinimum = myMinimumBy compare

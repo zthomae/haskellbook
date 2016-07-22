@@ -1,0 +1,17 @@
+1. Write a function to give all multiples of 3
+out of a list from 1 to 30
+
+filter (\x -> (rem x 3) == 0) [1..30]
+
+2. How could we compose the above function with
+the length function to tell us how many multiples
+of 3 there are between 1 and 30?
+
+(length . (filter (\x -> (rem x 3) == 0))) [1..30]
+
+3. Remove the articles ("the", "a", and "and") from
+sentences
+
+myFilter :: String -> [String]
+myFilter s =
+  (filter (\w -> not (elem w ["the", "a", "and"]))) $ words s
