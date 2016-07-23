@@ -76,3 +76,36 @@ takes two Bools.
 d) foldr (||) True [False, True]
 
 It looks like this will always return True (unless it evaluates bottom).
+This is almost certainly not what they want it to do. Instead, the accumulator
+should start with False.
+
+e) foldl ((++) . show) "" [1..5]
+
+Observe the type of foldl ((++) . show):
+foldl ((++) . show) :: Foldable t => [Char] -> t [Char] -> [Char]
+
+This is because the function ((++) . show) returns a [Char], meaning that
+the elements of the list being folded over need to be strings. Our idea
+to convert them to strings inside the function will not work, because
+the overall expression will not type check.
+
+You can fix it like this:
+
+foldl (++) "" (map show [1..5])
+
+f) foldr const 'a' [1..5]
+
+Even though we don't evaluate the second argument, the types don't match.
+You can map show over them if you want.
+
+g) foldr const 0 "tacos"
+
+Same deal.
+
+h) foldl (flip const)
+
+Same deal.
+
+i) foldl (flip const) 'z' [1..5]
+
+Am I missing something?

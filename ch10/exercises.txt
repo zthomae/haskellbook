@@ -1,0 +1,113 @@
+# Warm-up and review
+
+1. Given the following sets of consonants and vowels:
+
+stops = "pbtdkg"
+vowels = "aeiou"
+
+a) Write a function that takes inputs from stops and vowels and makes
+3-tuples of all possible stop-vowel-stop combinations. These will not all
+correspond to real words in English, although the stop-vowel-stop pattern
+is common enough that many of them will.
+
+combinations stops vowels = [(s1, v, s2) | s1 <- stops, v <- vowels, s2 <- stops]
+
+b) Modify that function so that it only returns the combinations that begin
+with a p
+
+combinations' stops vowels =
+  [("p", v, s2) | v <- vowels, s2 <- stops]
+
+c) Now set up lists of nouns and verbs and modify the function to make
+tuples representing possible noun-verb-noun sentences
+
+All I would have to do is allow the most general type signature and this
+would already work.
+
+2. What does the following mystery function do? What is its type?
+
+seekritFunc x =
+  div (sum (map length (words x)))
+      (length (words x))
+
+seekritFunc :: String -> Int
+
+This function finds the average length of the words in it
+
+3. Rewrite the above using fractional division
+
+import Data.List
+
+seekritFunc' x = / (sum (map length (words x)))
+                   (genericLength (words x))
+
+# Rewriting functions using folds
+
+ex:
+
+myAnd :: [Bool] -> Bool
+myAnd = foldr (&&) True
+
+1.
+
+myOr :: [Bool] -> Bool
+myOr = foldr (||) False
+
+2.
+
+myAny :: (a -> Bool) -> [a] -> Bool
+myAny f = foldr (\a b -> (f a) || b) False
+
+3. (I wrote myElem using any last time)
+
+myElem :: Eq a => a -> [a] -> Bool
+myElem x = foldr (\a b -> (a == x) || b) False
+
+4. I already did myReverse last time using a fold. But I'll do it better
+this time:
+
+myReverse :: [a] -> [a]
+myReverse = foldl' (flip (:)) []
+
+5. Write myMap in terms of foldr
+
+myMap :: (a -> b) -> [a] -> b
+myMap f = foldr (\a bs -> (f a) : bs) []
+
+6.
+
+myFilter :: (a -> Bool) -> [a] -> [a]
+myFilter f = foldr (\a as -> if (f a) a:as else as) []
+
+7.
+
+squish :: [[a] -> [a]]
+squish = foldr (++) []
+
+8.
+
+squishMap :: (a -> [b]) -> [a] -> [b]
+squishMap f = foldr (\a bs -> (f a) ++ bs) []
+
+9. Why do this again?
+
+10. I still think there ought to be a better way
+to check this...
+
+myMaximumBy :: (a -> a -> Ordering) -> [a] -> a
+myMaximumBy (a:as) =
+  foldr
+    (\a m -> case (f a m) of
+               GT -> a
+               _ -> m)
+    a as
+
+11.
+
+myMinimumBy :: (a -> a -> Ordering) -> [a] -> a
+myMinimumBy (a:as) =
+  foldr
+    (\a m -> case (f a m) of
+               LT -> a
+               _ -> m)
+    a as
