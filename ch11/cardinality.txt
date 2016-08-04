@@ -1,0 +1,21 @@
+Make a guess as to the cardinality -- the number of possible values it defines --
+for each of the following:
+
+1. data PugType = PugData: 1
+
+2. data AirLine = PapuAir | CatapultsR'Us | TakeYourChancesUnited: 3
+
+3. The cardinality of Int8 is 256, or 2^8. Similarly, the cardinality of Int16
+is 2^16, or 65536
+
+4. The cardinality of Int can be found by doing
+
+abs (toInteger (minBound :: Int)) + toInteger (maxBound :: Int) + 1
+
+This gives us 18446744073709551616, which happens to be 2^64.
+
+minBound and maxBound don't have instances for Integer, because this is an
+arbitrary-precision type. Therefore, the cardinality of Integer is infinite.
+
+5. What's the connection between the 8 in Int8 and the type's cardinality of
+256? Read the answer to #3 to find out!

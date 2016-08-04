@@ -1,0 +1,25 @@
+Given
+
+data Example = MakeExample deriving Show
+
+1. What is the type of MakeExample?
+
+Example.
+
+What happens when you request the type of Example?
+
+It doesn't work -- Example isn't a data constructor. (You may want the kind.)
+
+2. What if you try :info on Example?
+
+This shows us the definition and typeclass instances, namely Show.
+
+Prelude> :i Example
+data Example = MyExample        -- Defined at <interactive>:26:1
+instance Show Example -- Defined at <interactive>:26:35
+
+3. A unary variant:
+
+data MyOtherExample = MakeOtherExample Int
+
+The type of MakeOtherExample is now Int -> MyOtherExample

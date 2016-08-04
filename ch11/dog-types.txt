@@ -1,0 +1,60 @@
+Given
+
+data DogueDeBordeaux doge = DogueDeBordeaux doge
+
+data Doggies a =
+    Husky a
+  | Mastiff a
+  deriving (Eq, Show)
+
+1. Is Doggies a type constructor or a data constructor?
+
+Doggies is a type constructor. If you supply Doggies with a type,
+then it becomes a fully specified type. For example:
+
+badDoggie :: Doggies Int
+
+has the type Doggies Int.
+
+2. What is the kind of Doggies?
+
+Since it needs a type to be applied to it to produce a type, the kind
+is * -> *
+
+3. What is the kind of Doggies String?
+
+*
+
+4. What is the type of Husky 10?
+
+Num a => Doggies a
+
+5. What is the type of Husky (10 :: Integer)
+
+Doggies Integer
+
+6. What is the type of Mastiff "Scooby Doo"?
+
+Doggies String
+
+7. Is DogueDeBordeaux a type constructor or a data constructor?
+
+This is an ambiguous question -- it depends on the context. However, the
+Haskell compiler is capable of tracking the context for us.
+
+However...
+
+8. What is the type of DogueDeBordeaux?
+
+According to the repl:
+
+Prelude> :t DogueDeBordeaux
+DogueDeBordeaux :: doge -> DogueDeBordeaux doge
+
+Remember that we cannot take the type of a type constructor, only of a data
+constructor. Asking this question constrains us so that we cannot consider
+the type constructor of the same name.
+
+9. What is the type of DogueDeBordeaux "doggie!"?
+
+DogueDeBordeaux [Char]
