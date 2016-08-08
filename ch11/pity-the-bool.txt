@@ -1,0 +1,26 @@
+1. Given the datatype
+
+data BigSmall =
+    Big Bool
+  | Small Bool
+  deriving (Eq, Show)
+
+What is the cardinality of this datatype?
+
+We know that the cardinality of Bool is 2. Since there are two data
+constructors taking a Bool argument, the cardinality must be 4.
+
+2. Given a datatype
+
+-- needed to have Int8 in scope
+import Data.Int
+
+data NumberOrBool =
+    Numba Int8
+  | BoolyBool Bool
+  deriving (Eq, Show)
+
+What is the cardinality of this datatype?
+
+Int8 has a cardinality of 256. Bool has a cardinality of 2. Therefore,
+NumberOrBool has a cardinality of 258.
