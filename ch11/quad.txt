@@ -1,0 +1,22 @@
+Determine how many unique inhabitants each type has
+
+data Quad
+  = One
+  | Two
+  | Three
+  | Four
+  deriving (Eq, Show)
+
+1. eQuad :: Either Quad Quad has 4+4 = 8 inhabitants
+
+2. prodQuad :: (Quad, Quad) has 4*4 = 16 inhabitants
+
+3. funcQuad :: Quad -> Quad has 4^4 = 256 inhabitants
+
+4. prodTBool :: (Bool, Bool, Bool) has 2^3 = 8 inhabitants
+
+5. gTwo :: Bool -> Bool -> Bool has (2^2)^2 = 16 inhabitants
+
+6. fTwo :: Bool -> Quad -> Quad has (2^4)^4 = 65536 inhabitants
+
+Note that the exponentiation is left associative...
