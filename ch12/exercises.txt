@@ -1,0 +1,13 @@
+# Determine the kinds
+
+1. Given id :: a -> a, what is the kind of a?
+
+The kind of a is *.
+
+2. Given r :: a -> f a, what are the kinds of a and f?
+
+The kind of a is *. The kind of f is * -> *.
+
+---
+
+See exercises.hs
