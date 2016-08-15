@@ -14,7 +14,16 @@ replaceThe :: String -> String
 replaceThe w = intercalate " " (map (fromMaybe "a" . notThe) (words w))
 
 countTheBeforeVowel :: String -> Integer
-countTheBeforeVowel = undefined
+countTheBeforeVowel s =
+  let
+    ws = words s
+    startsWithVowel s = isVowel (head s)
+    isTheBeforeVowel = \ (first, second) ->
+      case notThe first of
+        Nothing -> startsWithVowel second
+        _ -> False
+  in
+    genericLength $ filter isTheBeforeVowel (zip ws (tail ws))
 
 vowels = "aeiou"
 
