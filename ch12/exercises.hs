@@ -1,5 +1,6 @@
 module Ch12Exercises where
 
+import Data.Char
 import Data.List
 
 ---
@@ -10,16 +11,19 @@ notThe :: String -> Maybe String
 notThe s = if (s == "the") then Nothing else Just s
 
 replaceThe :: String -> String
-replaceThe w = intercalate " " (map (\a -> case notThe(a) of
-                                        Just s -> s
-                                        Nothing -> "a") (words w))
+replaceThe w = intercalate " " (map (fromMaybe "a" . notThe) (words w))
 
 countTheBeforeVowel :: String -> Integer
 countTheBeforeVowel = undefined
 
-countVowels :: String -> Integer
-countVowels = undefined
+vowels = "aeiou"
 
+isVowel :: Char -> Bool
+isVowel c = elem c vowels
+
+countVowels :: String -> Integer
+--countVowels s = genericLength (filter isVowel s)
+countVowels = foldr (\ char count -> if (isVowel char) then count + 1 else count) 0
 ---
 -- Validate the word
 ---
@@ -28,10 +32,14 @@ newtype Word' =
   Word' String
   deriving (Eq, Show)
 
-vowels = "aeiou"
-
 mkWord :: String -> Maybe Word'
-mkWord = undefined
+mkWord s =
+  if (numVowels > numConsonants) then Nothing else Just (Word' s)
+  where (numVowels, numConsonants) =
+          foldr
+            (\ char (vs, cs) -> if (isVowel char) then (vs + 1, cs) else (vs, cs + 1))
+            (0, 0)
+            (map toLower s)
 
 ---
 -- It's only Natural
@@ -43,11 +51,15 @@ data Nat
   deriving (Eq, Show)
 
 natToInteger :: Nat -> Integer
-natToInteger = undefined
+natToInteger n = case n of
+  Zero -> 0
+  Succ n' -> 1 + natToInteger n'
 
 integerToNat :: Integer -> Maybe Nat
-integerToNat = undefined
-
+integerToNat i
+  | i == 0 = Just Zero
+  | i > 0 = Just $ Succ (fromMaybe Zero $ integerToNat (i - 1))
+  | otherwise = Nothing
 ---
 -- Small library for Maybe
 ---
@@ -84,6 +96,7 @@ catMaybes :: [Maybe a] -> [a]
 catMaybes = foldr (\ new rest -> case new of
                                    Just s -> s:rest
                                    _ -> rest) []
+-- catMaybes ms = [a | Just a <- ms]
 
 flipMaybe :: [Maybe a] -> Maybe [a]
 flipMaybe = foldr (\ new rest -> case (new, rest) of
@@ -99,11 +112,13 @@ lefts' :: [Either a b] -> [a]
 lefts' = foldr (\ new rest -> case new of
                                 Left a -> a:rest
                                 _ -> rest) []
+-- lefts' es = [e | Left e <- es]
 
 rights' :: [Either a b] -> [b]
 rights' = foldr (\ new rest -> case new of
                                  Right b -> b:rest
                                  _ -> rest) []
+-- rights' es = [e | Right e <- es]
 
 partitionEithers' :: [Either a b] -> ([a], [b])
 partitionEithers' es = (lefts' es, rights' es)
@@ -126,13 +141,15 @@ eitherMaybe'' f e = either' (\_ -> Nothing) (Just . f) e
 ---
 
 myIterate :: (a -> a) -> a -> [a]
-myIterate = undefined
+myIterate f start = start : myIterate f (f start)
 
 myUnfoldr :: (b -> Maybe (a, b)) -> b -> [a]
-myUnfoldr = undefined
+myUnfoldr f start = case f start of
+  Just (a, b) -> a : myUnfoldr f b
+  _ -> []
 
 betterIterate :: (a -> a) -> a -> [a]
-betterIterate f x = myUnfoldr undefined undefined
+betterIterate f x = myUnfoldr (\a -> Just (a, f a)) x
 
 data BinaryTree a
   = Leaf
@@ -140,7 +157,11 @@ data BinaryTree a
   deriving (Eq, Ord, Show)
 
 unfold :: (a -> Maybe (a, b, a)) -> a -> BinaryTree b
-unfold = undefined
+-- unfold f start = case f start of
+--   Just (left, root, right) -> Node (unfold f left) root (unfold f right)
+--   _ -> Leaf
+unfold f start =
+  foldr (\(left, root, right) _ -> Node (unfold f left) root (unfold f right)) Leaf (f start)
 
 treeBuild :: Integer -> BinaryTree Integer
-treeBuild = undefined
+treeBuild n = unfold (\i -> if i >= n then Nothing else Just (i+1, i, i+1)) 0
