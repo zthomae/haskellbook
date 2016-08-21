@@ -18,6 +18,8 @@ library
   exposed-modules:     Lib
                      , WordNumber
                      , Arithmetic
+                     , Cipher
+                     , Hangman
   build-depends:       base >= 4.7 && < 5
                      , hspec
                      , QuickCheck
