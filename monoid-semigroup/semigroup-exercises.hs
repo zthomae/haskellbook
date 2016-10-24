@@ -1,7 +1,7 @@
 module SemigroupExercises where
 
 import Data.Semigroup
-import Test.QuickCheck
+import Test.QuickCheck hiding (Failure, Success)
 
 data Trivial = Trivial deriving (Eq, Show)
 
@@ -133,16 +133,103 @@ type OrAssoc = Or String String -> Or String String -> Or String String -> Bool
 newtype Combine a b = Combine { unCombine :: (a -> b) }
 
 instance (Semigroup b) => Semigroup (Combine a b) where
-  
+  (<>) = undefined
+
 --
+
+newtype Comp a = Comp { unComp :: (a -> a) }
+
+instance (Semigroup a) => Semigroup (Comp a) where
+  (<>) = undefined
+
+--
+
+data Validation a b = Failure a | Success b deriving (Eq, Show)
+
+instance Semigroup a => Semigroup (Validation a b) where
+  Failure a <> Failure b = Failure (a <> b)
+  Failure a <> _ = Failure a
+  _ <> Failure a = Failure a
+  first <> second = second
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Validation a b) where
+  arbitrary = do
+    a <- arbitrary
+    b <- arbitrary
+    elements [Failure a, Success b]
+
+type ValidationAssoc = Validation String String -> Validation String String -> Validation String String -> Bool
+
+--
+
+newtype AccumulateRight a b =
+  AccumulateRight (Validation a b)
+  deriving (Eq, Show)
+
+instance Semigroup b => Semigroup (AccumulateRight a b) where
+  AccumulateRight (Success a) <> AccumulateRight (Success b) = AccumulateRight (Success (a <> b))
+  _ <> AccumulateRight (Failure a) = AccumulateRight (Failure a)
+  AccumulateRight (Failure a) <> _ = AccumulateRight (Failure a)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (AccumulateRight a b) where
+  arbitrary = do
+    a <- arbitrary
+    b <- arbitrary
+    elements [AccumulateRight (Failure a), AccumulateRight (Success b)]
+
+type AccumulateRightAssoc = AccumulateRight String String -> AccumulateRight String String -> AccumulateRight String String -> Bool
+
+--
+
+newtype AccumulateBoth a b =
+  AccumulateBoth (Validation a b)
+  deriving (Eq, Show)
+
+instance (Semigroup a, Semigroup b) => Semigroup (AccumulateBoth a b) where
+  AccumulateBoth (Success a) <> AccumulateBoth (Success b) = AccumulateBoth (Success (a <> b))
+  AccumulateBoth (Failure a) <> AccumulateBoth (Failure b) = AccumulateBoth (Failure (a <> b))
+  _ <> AccumulateBoth (Failure a) = AccumulateBoth (Failure a)
+  AccumulateBoth (Failure a) <> _ = AccumulateBoth (Failure a)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (AccumulateBoth a b) where
+  arbitrary = do
+    a <- arbitrary
+    b <- arbitrary
+    elements [AccumulateBoth (Failure a), AccumulateBoth (Success b)]
+
+type AccumulateBothAssoc = AccumulateBoth String String -> AccumulateBoth String String -> AccumulateBoth String String -> Bool
 
 main :: IO ()
 main = do
+  putStrLn "Trivial tests"
   quickCheck (semigroupAssoc :: TrivialAssoc)
+
+  putStrLn "Identity tests"
   quickCheck (semigroupAssoc :: IdentityAssoc)
+
+  putStrLn "Two tests"
   quickCheck (semigroupAssoc :: TwoAssoc)
+
+  putStrLn "Three tests"
   quickCheck (semigroupAssoc :: ThreeAssoc)
+
+  putStrLn "Four tests"
   quickCheck (semigroupAssoc :: FourAssoc)
+
+  putStrLn "BoolConj tests"
   quickCheck (semigroupAssoc :: BoolConjAssoc)
+
+  putStrLn "BoolDisj tests"
   quickCheck (semigroupAssoc :: BoolDisjAssoc)
+
+  putStrLn "Or tests"
   quickCheck (semigroupAssoc :: OrAssoc)
+
+  putStrLn "Validation tests"
+  quickCheck (semigroupAssoc :: ValidationAssoc)
+
+  putStrLn "AccumulateRight tests"
+  quickCheck (semigroupAssoc :: AccumulateRightAssoc)
+
+  putStrLn "AccumulateBoth tests"
+  quickCheck (semigroupAssoc :: AccumulateBothAssoc)
