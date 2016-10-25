@@ -106,10 +106,10 @@ type BoolDisjAssoc = BoolDisj -> BoolDisj -> BoolDisj -> Bool
 newtype Combine a b = Combine { unCombine :: (a -> b) }
 
 instance (Semigroup b) => Semigroup (Combine a b) where
-  (<>) = undefined
+  Combine f <> Combine g = Combine $ \a -> (f a) <> (g a)
 
 instance (Semigroup b, Monoid b) => Monoid (Combine a b) where
-  mempty = undefined
+  mempty = Combine $ \_ -> mempty
   mappend = (<>)
 
 --
@@ -117,10 +117,10 @@ instance (Semigroup b, Monoid b) => Monoid (Combine a b) where
 newtype Comp a = Comp { unComp :: (a -> a) }
 
 instance (Semigroup a) => Semigroup (Comp a) where
-  (<>) = undefined
+  Comp f <> Comp g = Comp (f . g)
 
 instance (Semigroup a, Monoid a) => Monoid (Comp a) where
-  mempty = undefined
+  mempty = Comp id
   mappend = (<>)
 
 --

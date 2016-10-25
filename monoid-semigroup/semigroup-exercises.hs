@@ -133,14 +133,14 @@ type OrAssoc = Or String String -> Or String String -> Or String String -> Bool
 newtype Combine a b = Combine { unCombine :: (a -> b) }
 
 instance (Semigroup b) => Semigroup (Combine a b) where
-  (<>) = undefined
+  Combine f <> Combine g = Combine $ \a -> (f a) <> (g a)
 
 --
 
 newtype Comp a = Comp { unComp :: (a -> a) }
 
 instance (Semigroup a) => Semigroup (Comp a) where
-  (<>) = undefined
+  Comp f <> Comp g = Comp (f . g)
 
 --
 
@@ -150,7 +150,7 @@ instance Semigroup a => Semigroup (Validation a b) where
   Failure a <> Failure b = Failure (a <> b)
   Failure a <> _ = Failure a
   _ <> Failure a = Failure a
-  first <> second = second
+  _ <> second = second
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (Validation a b) where
   arbitrary = do
