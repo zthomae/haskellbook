@@ -1,5 +1,9 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module SemigroupExercises where
 
+import GHC.Generics
 import Data.Semigroup
 import Test.QuickCheck hiding (Failure, Success)
 
@@ -130,17 +134,42 @@ type OrAssoc = Or String String -> Or String String -> Or String String -> Bool
 
 --
 
-newtype Combine a b = Combine { unCombine :: (a -> b) }
+newtype Combine a b = Combine { unCombine :: (a -> b) } deriving (Generic)
 
 instance (Semigroup b) => Semigroup (Combine a b) where
   Combine f <> Combine g = Combine $ \a -> (f a) <> (g a)
 
+instance CoArbitrary (Combine String String)
+
+-- combineAssoc :: (Eq a) => Combine a a -> Combine a a -> Combine a a -> a -> Bool
+-- combineAssoc f g h a =
+--   let
+--     (Combine left) = (f <> g) <> h
+--     (Combine right) = f <> (g <> h)
+--   in
+--     left a == right a
+
+type CombineAssoc = Combine String String -> Combine String String -> Combine String String -> Bool
+
 --
 
-newtype Comp a = Comp { unComp :: (a -> a) }
+newtype Comp a = Comp { unComp :: (a -> a) } deriving (Generic)
 
 instance (Semigroup a) => Semigroup (Comp a) where
   Comp f <> Comp g = Comp (f . g)
+
+instance CoArbitrary (Comp String)
+
+-- this is repetitive
+-- compAssoc :: (Eq a) => Comp a -> Comp a -> Comp a -> a -> Bool
+-- compAssoc f g h a =
+--   let
+--     (Comp left) = (f <> g) <> h
+--     (Comp right) = f <> (g <> h)
+--   in
+--     left a == right a
+
+type CompAssoc = Comp String -> Comp String -> Comp String -> Bool
 
 --
 
@@ -148,9 +177,9 @@ data Validation a b = Failure a | Success b deriving (Eq, Show)
 
 instance Semigroup a => Semigroup (Validation a b) where
   Failure a <> Failure b = Failure (a <> b)
-  Failure a <> _ = Failure a
-  _ <> Failure a = Failure a
-  _ <> second = second
+  left@(Failure a) <> _ = left
+  _ <> right@(Failure a) = right
+  _ <> right = right
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (Validation a b) where
   arbitrary = do
@@ -168,8 +197,8 @@ newtype AccumulateRight a b =
 
 instance Semigroup b => Semigroup (AccumulateRight a b) where
   AccumulateRight (Success a) <> AccumulateRight (Success b) = AccumulateRight (Success (a <> b))
-  _ <> AccumulateRight (Failure a) = AccumulateRight (Failure a)
-  AccumulateRight (Failure a) <> _ = AccumulateRight (Failure a)
+  _ <> right@(AccumulateRight (Failure a)) = right
+  left@(AccumulateRight (Failure a)) <> _ = left
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (AccumulateRight a b) where
   arbitrary = do
@@ -188,8 +217,8 @@ newtype AccumulateBoth a b =
 instance (Semigroup a, Semigroup b) => Semigroup (AccumulateBoth a b) where
   AccumulateBoth (Success a) <> AccumulateBoth (Success b) = AccumulateBoth (Success (a <> b))
   AccumulateBoth (Failure a) <> AccumulateBoth (Failure b) = AccumulateBoth (Failure (a <> b))
-  _ <> AccumulateBoth (Failure a) = AccumulateBoth (Failure a)
-  AccumulateBoth (Failure a) <> _ = AccumulateBoth (Failure a)
+  _ <> right@(AccumulateBoth (Failure a)) = right
+  left@(AccumulateBoth (Failure a)) <> _ = left
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (AccumulateBoth a b) where
   arbitrary = do
