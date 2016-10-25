@@ -7,6 +7,9 @@ import GHC.Generics
 import Data.Semigroup
 import Test.QuickCheck hiding (Failure, Success)
 
+-- this is terrible
+import Text.Show.Functions
+
 data Trivial = Trivial deriving (Eq, Show)
 
 instance Semigroup Trivial where
@@ -134,40 +137,50 @@ type OrAssoc = Or String String -> Or String String -> Or String String -> Bool
 
 --
 
-newtype Combine a b = Combine { unCombine :: (a -> b) } deriving (Generic)
+newtype Combine a b = Combine { unCombine :: (a -> b) } deriving (Generic, Show)
 
 instance (Semigroup b) => Semigroup (Combine a b) where
   Combine f <> Combine g = Combine $ \a -> (f a) <> (g a)
 
 instance CoArbitrary (Combine String String)
 
--- combineAssoc :: (Eq a) => Combine a a -> Combine a a -> Combine a a -> a -> Bool
--- combineAssoc f g h a =
---   let
---     (Combine left) = (f <> g) <> h
---     (Combine right) = f <> (g <> h)
---   in
---     left a == right a
+combineAssoc :: (Eq a, Semigroup a) => a -> Combine a a -> Combine a a -> Combine a a -> Bool
+combineAssoc a f g h =
+  let
+    (Combine left) = (f <> g) <> h
+    (Combine right) = f <> (g <> h)
+  in
+    left a == right a
+
+instance (CoArbitrary a, Arbitrary b) => Arbitrary (Combine a b) where
+  arbitrary = do
+    f <- arbitrary
+    return $ Combine f
 
 type CombineAssoc = Combine String String -> Combine String String -> Combine String String -> Bool
 
 --
 
-newtype Comp a = Comp { unComp :: (a -> a) } deriving (Generic)
+newtype Comp a = Comp { unComp :: (a -> a) } deriving (Generic, Show)
 
 instance (Semigroup a) => Semigroup (Comp a) where
   Comp f <> Comp g = Comp (f . g)
 
-instance CoArbitrary (Comp String)
+--instance CoArbitrary (Comp String)
 
 -- this is repetitive
--- compAssoc :: (Eq a) => Comp a -> Comp a -> Comp a -> a -> Bool
--- compAssoc f g h a =
---   let
---     (Comp left) = (f <> g) <> h
---     (Comp right) = f <> (g <> h)
---   in
---     left a == right a
+compAssoc :: (Eq a, Semigroup a) => a -> Comp a -> Comp a -> Comp a -> Bool
+compAssoc a f g h =
+  let
+    (Comp left) = (f <> g) <> h
+    (Comp right) = f <> (g <> h)
+  in
+    left a == right a
+
+instance (Arbitrary a, CoArbitrary a) => Arbitrary (Comp a) where
+  arbitrary = do
+    f <- arbitrary
+    return $ Comp f
 
 type CompAssoc = Comp String -> Comp String -> Comp String -> Bool
 
@@ -253,6 +266,12 @@ main = do
 
   putStrLn "Or tests"
   quickCheck (semigroupAssoc :: OrAssoc)
+
+  putStrLn "Combine tests"
+  quickCheck ((combineAssoc "a") :: CombineAssoc)
+
+  putStrLn "Comp tests"
+  quickCheck (compAssoc "a")
 
   putStrLn "Validation tests"
   quickCheck (semigroupAssoc :: ValidationAssoc)
