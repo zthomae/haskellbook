@@ -1,0 +1,25 @@
+1. What's the kind of a?
+
+a -> a
+
+The kind of a is *
+
+2. What are the kinds of b and T?
+
+a -> b a -> T (b a)
+
+Since b is an argument to ->, we know that b a must have the
+kind *. This means that b must have the kind * -> *.
+
+Similarly, T (b a) must have the kind * as well. T takes one
+argument and thus has kind * -> *. T being capitalized means
+that it is a concrete type constructor, but its kind is
+still the same. (Imagine if T were substituted for a real
+type constructor, like Maybe.)
+
+3. What's the kind of c?
+
+c a b -> c b a
+
+(c a b) and (c b a) must each have the kind *. c has the
+kind * -> * -> *.

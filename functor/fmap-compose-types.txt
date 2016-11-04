@@ -1,0 +1,36 @@
+(.) :: (b -> c) -> (a -> b) -> a -> c
+
+fmap :: Functor f => (m -> n) -> f m -> f n
+fmap :: Functor g => (x -> y) -> g x -> g y
+
+(fmap . fmap)
+=============
+
+(b -> c) == (m -> n) -> f m -> f n
+   b == (m -> n)
+   c == f m -> f n
+
+(a -> b) == (x -> y) -> g x -> g y
+   a == (x -> y)
+   b == g x -> g y
+
+m == g x
+n == g y
+c == f (g x) -> f (g y)
+
+Now to actually compose fmap with itself and demonstrate the
+resulting a -> c:
+
+(fmap . fmap) :: (Functor f, Functor g) => (x -> y) -> f (g x) -> f (g y)
+
+=============
+lms = [Just "Ave", Nothing, Just "woohoo"]
+replaceWithP = const 'p'
+
+(fmap . fmap) replaceWithP lms = [Just 'p', Nothing, Just 'p']
+f == List
+g == Maybe
+x == Char
+y == Char
+
+(fmap . fmap) replaceWithP :: (Char -> Char) -> [Maybe Char] -> [Maybe Char]
