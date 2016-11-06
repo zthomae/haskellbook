@@ -21,8 +21,9 @@ instance Functor BoolAndMaybeSomethingElse where
   fmap f (Truish a) = Truish (f a)
   fmap _ _ = Falsish
 
--- Mu has kind (* -> *) -> *, so I don't believe
--- you can write a Functor instance for it.
+-- Mu has kind (* -> *) -> *. I can see why you
+-- might be able to do it, but I haven't figured
+-- it out yet.
 newtype Mu f = InF { outF :: f (Mu f) }
 
 -- D has the kind *, so you cannot write a Functor
