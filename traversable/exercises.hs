@@ -142,16 +142,22 @@ instance (Eq a, Eq b) => EqProp (Three' a b) where
   (=-=) = eq
 
 -- S
-data S n a = S (n a) a
+data S n a = S (n a) a deriving (Eq, Show)
 
-instance Functor (S n) where
-  fmap f (S n a) = undefined
+instance Functor n => Functor (S n) where
+  fmap f (S n a) = S (fmap f n) (f a)
 
-instance Foldable (S n) where
-  foldMap f (S n a) = undefined
+instance Foldable n => Foldable (S n) where
+  foldMap f (S n a) = foldMap f n <> f a
 
 instance Traversable n => Traversable (S n) where
-  traverse = undefined
+  traverse f (S n a) = S <$> traverse f n <*> f a
+
+instance (Arbitrary a, Arbitrary (n a)) => Arbitrary (S n a) where
+  arbitrary = S <$> arbitrary <*> arbitrary
+
+instance (Eq a, Eq (n a)) => EqProp (S n a) where
+  (=-=) = eq
 
 -- Tree
 data Tree a = Empty | Leaf a | Node (Tree a) a (Tree a) deriving (Eq, Show)
@@ -189,5 +195,6 @@ main = do
   quickBatch (traversable (undefined :: List TY))
   quickBatch (traversable (undefined :: Three Int Int TY))
   quickBatch (traversable (undefined :: Three' Int TY))
-  --quickBatch S
+  quickBatch (functor (undefined :: S [] TY))
+  quickBatch (traversable (undefined :: S [] TY))
   quickBatch (traversable (undefined :: Tree TY))
