@@ -95,7 +95,7 @@ instance Applicative List where
 
 instance Traversable List where
   traverse _ Nil = pure Nil
-  traverse f (Cons car cdr) = undefined
+  traverse f (Cons car cdr) = Cons <$> f car <*> traverse f cdr
 
 instance Arbitrary a => Arbitrary (List a) where
   arbitrary = frequency [ (1, Cons <$> arbitrary <*> arbitrary)
@@ -169,7 +169,16 @@ instance Foldable Tree where
 instance Traversable Tree where
   traverse _ Empty = pure Empty
   traverse f (Leaf a) = Leaf <$> f a
-  traverse f (Node left a right) = undefined
+  traverse f (Node left a right) = Node <$> traverse f left <*> f a <*> traverse f right
+
+instance Arbitrary a => Arbitrary (Tree a) where
+  arbitrary = frequency [ (1, return Empty)
+                        , (2, Leaf <$> arbitrary)
+                        , (2, Node <$> arbitrary <*> arbitrary <*> arbitrary)
+                        ]
+
+instance Eq a => EqProp (Tree a) where
+  (=-=) = eq
 
 type TY = (Int, Int, [Int])
 main :: IO ()
@@ -177,8 +186,8 @@ main = do
   quickBatch (traversable (undefined :: Identity TY))
   quickBatch (traversable (undefined :: Constant Int TY))
   quickBatch (traversable (undefined :: Optional TY))
-  --quickBatch (traversable (undefined :: List TY))
+  quickBatch (traversable (undefined :: List TY))
   quickBatch (traversable (undefined :: Three Int Int TY))
   quickBatch (traversable (undefined :: Three' Int TY))
   --quickBatch S
-  --quickBatch Tree
+  quickBatch (traversable (undefined :: Tree TY))
