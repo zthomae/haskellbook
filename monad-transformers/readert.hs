@@ -1,6 +1,10 @@
 {-# LANGUAGE InstanceSigs #-}
 module ReaderTransformer where
 
+import Control.Monad
+import Control.Monad.Trans.Class
+import Control.Monad.IO.Class
+
 -- I've been very explicit with the lambdas this time
 
 newtype ReaderT r m a =
@@ -28,3 +32,17 @@ instance Monad m => Monad (ReaderT r m) where
     ReaderT $ \r -> do
       v <- m r
       runReaderT (f v) r
+
+-- const will lift a value into a functional
+-- context. in this case, we know we need
+-- a function taking an r and returning an
+-- m a. Passing an m a to const will give
+-- us this (since we know the monadic structure
+-- is around the return type of the function
+-- stored in the reader).
+instance MonadTrans (ReaderT r) where
+  lift = ReaderT . const
+
+-- this is also the same as the EitherT instance...
+instance (MonadIO m) => MonadIO (ReaderT r m) where
+  liftIO = lift . liftIO

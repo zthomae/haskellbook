@@ -1,6 +1,10 @@
 {-# LANGUAGE InstanceSigs #-}
 module EitherTransformer where
 
+import Control.Monad
+import Control.Monad.Trans.Class
+import Control.Monad.IO.Class
+
 newtype EitherT e m a =
   EitherT { runEitherT :: m (Either e a) }
 
@@ -44,3 +48,16 @@ eitherT fa fb (EitherT m) = do
   case v of
     Left a -> fa a
     Right b -> fb b
+
+-- this instance is almost identical to that
+-- of MaybeT. I also explicitly use Right
+-- instead of return, for clarity of what
+-- this does (although you could perhaps
+-- tell given that the left type is part
+-- of the structure MonadTrans is defined
+-- on).
+instance MonadTrans (EitherT e) where
+  lift = EitherT . liftM Right
+
+instance (MonadIO m) => MonadIO (EitherT e m) where
+  liftIO = lift . liftIO
