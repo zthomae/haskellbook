@@ -22,14 +22,6 @@ data Config =
 type Scotty = ScottyT Text (ReaderT Config IO)
 type Handler = ActionT Text (ReaderT Config IO)
 
-bumpBoomp :: Text
-          -> M.Map Text Integer
-          -> (M.Map Text Integer, Integer)
-bumpBoomp k m =
-  case M.lookup k m of
-    Just v -> (M.insert k (v + 1) m, v + 1)
-    Nothing -> (M.insert k 1 m, 1)
-
 lookupOrInsert :: Ord a => a -> b -> (b -> b) -> M.Map a b -> M.Map a b
 lookupOrInsert key dflt next map =
   case (M.lookup key map) of
