@@ -22,8 +22,8 @@ data Config =
 type Scotty = ScottyT Text (ReaderT Config IO)
 type Handler = ActionT Text (ReaderT Config IO)
 
-lookupOrInsert :: Ord a => a -> b -> (b -> b) -> M.Map a b -> M.Map a b
-lookupOrInsert key dflt next map =
+updateOrInsert :: Ord a => a -> b -> (b -> b) -> M.Map a b -> M.Map a b
+updateOrInsert key dflt next map =
   case (M.lookup key map) of
     Just val -> M.adjust next key map
     Nothing -> M.insert key dflt map
@@ -32,7 +32,7 @@ updateKeyCount :: Config -> Text -> IO Integer
 updateKeyCount config key = do
   let ref = counts config
   originalMap <- readIORef ref
-  let updatedMap = lookupOrInsert key 1 (+1) originalMap
+  let updatedMap = updateOrInsert key 1 (+1) originalMap
   writeIORef ref updatedMap
   return $ updatedMap M.! key
 
