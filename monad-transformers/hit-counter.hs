@@ -2,6 +2,7 @@
 
 module Main where
 
+import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
 import Data.IORef
@@ -29,12 +30,30 @@ bumpBoomp k m =
     Just v -> (M.insert k (v + 1) m, v + 1)
     Nothing -> (M.insert k 1 m, 1)
 
+param' :: Text -> ActionT Text (ReaderT Config IO) Text
+param' k = rescue (param k) (const (return "the parameter was missing"))
+
+lookupOrInsert :: Ord a => a -> b -> (b -> b) -> M.Map a b -> M.Map a b
+lookupOrInsert key dflt next map =
+  case (M.lookup key map) of
+    Just val -> M.adjust next key map
+    Nothing -> M.insert key dflt map
+
+updateKeyCount :: Config -> Text -> IO Integer
+updateKeyCount config key = do
+  let ref = counts config
+  originalMap <- readIORef ref
+  let updatedMap = lookupOrInsert key 1 (+1) originalMap
+  writeIORef ref updatedMap
+  return $ updatedMap M.! key
+
 app :: Scotty ()
 app =
   get "/:key" $ do
-    unprefixed <- param "key"
-    let key' = mappend undefined unprefixed
-    newInteger <- undefined
+    config <- lift ask
+    unprefixed <- param' "key"
+    let key' = mappend (prefix config) unprefixed
+    newInteger <- liftIO $ updateKeyCount config key'
     html $ mconcat [ "<h1>Success! count was: "
                    , TL.pack $ show newInteger
                    , "</h1>"
@@ -45,5 +64,5 @@ main = do
   [prefixArg] <- getArgs
   counter <- newIORef M.empty
   let config = Config counter (TL.pack prefixArg)
-      runR = undefined
-  scottyT 300 runR app
+      runR = flip runReaderT config
+  scottyT 3000 runR app
