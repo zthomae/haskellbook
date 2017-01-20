@@ -30,9 +30,6 @@ bumpBoomp k m =
     Just v -> (M.insert k (v + 1) m, v + 1)
     Nothing -> (M.insert k 1 m, 1)
 
-param' :: Text -> ActionT Text (ReaderT Config IO) Text
-param' k = rescue (param k) (const (return "the parameter was missing"))
-
 lookupOrInsert :: Ord a => a -> b -> (b -> b) -> M.Map a b -> M.Map a b
 lookupOrInsert key dflt next map =
   case (M.lookup key map) of
@@ -51,7 +48,7 @@ app :: Scotty ()
 app =
   get "/:key" $ do
     config <- lift ask
-    unprefixed <- param' "key"
+    unprefixed <- param "key"
     let key' = mappend (prefix config) unprefixed
     newInteger <- liftIO $ updateKeyCount config key'
     html $ mconcat [ "<h1>Success! count was: "
