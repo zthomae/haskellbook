@@ -1,8 +1,8 @@
 module Morra where
 
-import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
+import Data.Char (toLower)
 
 data Score = Score Integer Integer deriving (Eq, Show)
 
@@ -16,20 +16,35 @@ move (Just (One, One)) (Score s1 s2) = (Just Even, Score s1 (s2 + 1))
 move (Just (Two, Two)) (Score s1 s2) = (Just Even, Score s1 (s2 + 1))
 move (Just _) (Score s1 s2) = (Just Odd, Score (s1 + 1) s2)
 
--- Not used...
-advance :: StateT Score IO (Maybe Player)
+loop :: StateT Score IO ()
+loop = do
+  (winner, score) <- advance
+  lift $ maybe (putStrLn "There was no winner") (\a -> putStrLn $ "Winner: " ++ (show a)) winner
+  lift $ putStrLn ("Score: " ++ (showScore score))
+  continue
+
+continue :: StateT Score IO ()
+continue = do
+  lift $ putStrLn "Do you wish to continue? (yes/no)"
+  response <- lift getLine
+  case (toLower <$> response) of
+    "yes" -> loop
+    "no" -> return ()
+    _ -> do
+      lift $ putStrLn "Invalid response"
+      continue
+
+advance :: StateT Score IO (Maybe Player, Score)
 advance = do
   s <- get
   (winner, score) <- lift $ step s
   put score
-  return winner
+  return (winner, score)
 
 step :: Score -> IO (Maybe Player, Score)
 step s = do
   maybeStep <- getMove
-  let m = move maybeStep s
-  putStrLn (show m)
-  return m
+  return $ move maybeStep s
 
 moveFromString :: String -> Maybe Move
 moveFromString "one" = Just One
@@ -48,8 +63,10 @@ getMove = do
       putStrLn "Invalid move"
       return $ Nothing
 
+showScore :: Score -> String
+showScore (Score a b) = concat ["Odd: ", (show a), ", Even: ", (show b)]
+
 main :: IO ()
 main = do
   let initialState = Score 0 0
-  step initialState
-  return ()
+  (evalStateT loop) initialState
