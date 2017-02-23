@@ -2,6 +2,7 @@ module Ch11Exercises where
 
 import Data.Char
 import Data.List
+import Data.Foldable
 
 ---
 -- Vigenere
@@ -9,9 +10,10 @@ import Data.List
 
 -- Note: only works on lowercase letters (unlike book...)
 
--- TODO: Simplify this
 encode :: (Char, Char) -> Char
-encode (b, c) = chr $ ord 'a' + (ord c + ord b - (2 * ord 'a')) `mod` 26
+encode (b, c) =
+  let a = ord 'a'
+  in chr $ a + (ord c + ord b - (2 * a)) `mod` 26
 
 -- Not splitting into words first
 vigenereCipher :: String -> String -> String
@@ -55,28 +57,23 @@ capitalizeWord :: String -> String
 capitalizeWord "" = ""
 capitalizeWord (c:cs) = (toUpper c):cs
 
--- Not asked for, but I want it for clarity
-capitalizeFirstWord :: [String] -> [String]
-capitalizeFirstWord [] = []
-capitalizeFirstWord (w:ws) = (capitalizeWord w):ws
-
-sentences :: [String] -> [[String]]
-sentences words = reverse (map reverse $ sentences' [] words)
-
--- Dear God...
-sentences' :: [[String]] -> [String] -> [[String]]
-sentences' acc [] = acc
-sentences' acc (w:ws) = sentences' next ws
-  where next = case (acc, last w) of
-                 ([], '.') -> [[], [w]]
-                 ([], _) -> [[w]]
-                 ([]:as, '.') -> []:[w]:as
-                 ([]:as, _) -> [w]:as
-                 (a:as, '.') -> []:(w:a):as
-                 (a:as, _) -> (w:a):as
+-- TODO: Iterate more cleanly to get rid of some of these reversals
+sentences :: String -> [String]
+sentences = reverse . map reverse . fst . foldl' aux ([], True)
+  where addCharToSentences c [] = [[c]]
+        addCharToSentences c (w:ws) = (c:w):ws
+        aux (acc, isInSentence) next =
+          case next of
+            '.' -> (addCharToSentences '.' acc, False)
+            ' ' -> if isInSentence
+                   then (addCharToSentences ' ' acc, True)
+                   else (acc, False)
+            _ -> if isInSentence
+                 then (addCharToSentences next acc, True)
+                 else ([next]:acc, True)
 
 capitalizeParagraph :: String -> String
-capitalizeParagraph p = intercalate " " $ concat (map capitalizeFirstWord (sentences (words p)))
+capitalizeParagraph p = intercalate " " (map capitalizeWord (sentences p))
 
 ---
 -- Phone exercise
