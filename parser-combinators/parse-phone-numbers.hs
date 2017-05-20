@@ -26,14 +26,19 @@ maybeSuccess :: Result a -> Maybe a
 maybeSuccess (Success a) = Just a
 maybeSuccess _ = Nothing
 
+-- common ending: 456-7890
+parseSeparatedEnd :: (Exchange -> LineNumber -> PhoneNumber) -> Parser PhoneNumber
+parseSeparatedEnd finish = do
+  exchange <- count 3 parseDigit
+  char '-'
+  line <- count 4 parseDigit
+  return $ finish (sumDigits exchange) (sumDigits line)
+
 -- format 1: 123-456-7890
 parseFormat1 = do
   area <- count 3 parseDigit
-  _ <- char '-'
-  exchange <- count 3 parseDigit
-  _ <- char '-'
-  line <- count 4 parseDigit
-  return $ PhoneNumber (sumDigits area) (sumDigits exchange) (sumDigits line)
+  char '-'
+  parseSeparatedEnd $ PhoneNumber (sumDigits area)
 
 -- format 2: 1234567890
 parseFormat2 = do
@@ -45,24 +50,17 @@ parseFormat2 = do
 -- format 3: (123) 456-7890
 parseFormat3 = do
   area <- between (char '(') (char ')') (count 3 parseDigit)
-  _ <- char ' '
-  exchange <- count 3 parseDigit
-  _ <- char '-'
-  line <- count 4 parseDigit
-  return $ PhoneNumber (sumDigits area) (sumDigits exchange) (sumDigits line)
+  char ' '
+  parseSeparatedEnd $ PhoneNumber (sumDigits area)
 
 -- format 4: 1-123-456-7890
+parseFormat4 :: Parser PhoneNumber
 parseFormat4 = do
-  _ <- string "1-"
-  area <- count 3 parseDigit
-  _ <- char '-'
-  exchange <- count 3 parseDigit
-  _ <- char '-'
-  line <- count 4 parseDigit
-  return $ PhoneNumber (sumDigits area) (sumDigits exchange) (sumDigits line)
+  string "1-"
+  parseFormat1
 
 parsePhone :: Parser PhoneNumber
-parsePhone = choice [try parseFormat1, try parseFormat2, try parseFormat3, try parseFormat4]
+parsePhone = choice [parseFormat3, parseFormat4, try parseFormat2, parseFormat1]
 
 main :: IO ()
 main = hspec $ do
