@@ -16,9 +16,6 @@ data PhoneNumber =
   PhoneNumber NumberingPlanArea Exchange LineNumber
   deriving (Eq, Show)
 
-parseDigit :: Parser Char
-parseDigit = oneOf "0123456789"
-
 sumDigits :: [Char] -> Int
 sumDigits = fromIntegral . (foldl' (\ n c -> (n * 10) + (toInteger (digitToInt c))) 0)
 
@@ -29,27 +26,27 @@ maybeSuccess _ = Nothing
 -- common ending: 456-7890
 parseSeparatedEnd :: (Exchange -> LineNumber -> PhoneNumber) -> Parser PhoneNumber
 parseSeparatedEnd finish = do
-  exchange <- count 3 parseDigit
+  exchange <- count 3 digit
   char '-'
-  line <- count 4 parseDigit
+  line <- count 4 digit
   return $ finish (sumDigits exchange) (sumDigits line)
 
 -- format 1: 123-456-7890
 parseFormat1 = do
-  area <- count 3 parseDigit
+  area <- count 3 digit
   char '-'
   parseSeparatedEnd $ PhoneNumber (sumDigits area)
 
 -- format 2: 1234567890
 parseFormat2 = do
-  area <- count 3 parseDigit
-  exchange <- count 3 parseDigit
-  line <- count 4 parseDigit
+  area <- count 3 digit
+  exchange <- count 3 digit
+  line <- count 4 digit
   return $ PhoneNumber (sumDigits area) (sumDigits exchange) (sumDigits line)
 
 -- format 3: (123) 456-7890
 parseFormat3 = do
-  area <- between (char '(') (char ')') (count 3 parseDigit)
+  area <- between (char '(') (char ')') (count 3 digit)
   char ' '
   parseSeparatedEnd $ PhoneNumber (sumDigits area)
 
