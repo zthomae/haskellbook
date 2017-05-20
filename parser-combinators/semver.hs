@@ -3,7 +3,7 @@ module SemVerParsing where
 import Control.Applicative
 import Data.Ord
 import Test.Hspec
-import Test.QuickCheck hiding (Result, Success)
+import Test.QuickCheck hiding (Failure, Result, Success)
 import Text.Trifecta
 
 data NumberOrString =
@@ -59,32 +59,29 @@ parseSemVer = do
   metadata <- option [] (char '+' *> sepBy1 parseNumberOrString (char '.'))
   return $ SemVer major minor patch release metadata
 
-maybeSuccess :: Result a -> Maybe a
-maybeSuccess (Success a) = Just a
-maybeSuccess _ = Nothing
+runTest :: (Eq a, Show a) => Parser a -> String -> Maybe a -> Expectation
+runTest parser input output =
+  case (parseString parser mempty input, output) of
+    (Success a, Just value) -> a `shouldBe` value
+    (Success a, Nothing) -> expectationFailure $ "Parsing " ++ input ++ " should have failed, instead produced " ++ show a
+    (Failure error, Just _) -> expectationFailure $ "Parse should have succeeded: " ++ show error
+    (Failure error, Nothing) -> return ()
 
 main :: IO ()
 main = hspec $ do
   describe "SemVer Parsing" $ do
+    let test = runTest parseSemVer
     it "should parse a simple version" $ do
-      let m = parseString parseSemVer mempty "2.1.1"
-          r = maybeSuccess m
-      r `shouldBe` (Just $ SemVer 2 1 1 [] [])
+      test "2.1.1" (Just $ SemVer 2 1 1 [] [])
 
     it "should parse a version with a pre-release section" $ do
-      let m = parseString parseSemVer mempty "1.0.0-x.7.z.92"
-          r = maybeSuccess m
-      r `shouldBe` (Just $ SemVer 1 0 0 [NOSS "x", NOSI 7, NOSS "z", NOSI 92] [])
+      test "1.0.0-x.7.z.92" (Just $ SemVer 1 0 0 [NOSS "x", NOSI 7, NOSS "z", NOSI 92] [])
 
     it "should parse a version with a metadata section" $ do
-      let m = parseString parseSemVer mempty "1.0.0+20130313144700"
-          r = maybeSuccess m
-      r `shouldBe` (Just $ SemVer 1 0 0 [] [NOSI 20130313144700])
+      test "1.0.0+20130313144700" (Just $ SemVer 1 0 0 [] [NOSI 20130313144700])
 
     it "should parse a version with a pre-release section and a metadata section" $ do
-      let m = parseString parseSemVer mempty "1.0.0-beta+exp.sha.5114f85"
-          r = maybeSuccess m
-      r `shouldBe` (Just $ SemVer 1 0 0 [NOSS "beta"] [NOSS "exp", NOSS "sha", NOSS "5114f85"])
+      test "1.0.0-beta+exp.sha.5114f85" (Just $ SemVer 1 0 0 [NOSS "beta"] [NOSS "exp", NOSS "sha", NOSS "5114f85"])
 
   describe "NumberOrString Ord" $ do
     it "should compare strings lexicographically" $ do

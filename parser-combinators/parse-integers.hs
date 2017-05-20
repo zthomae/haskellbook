@@ -5,7 +5,7 @@ import Data.Char (digitToInt)
 import Data.List (foldl')
 import Data.Ord
 import Test.Hspec
-import Test.QuickCheck hiding (Result, Success)
+import Test.QuickCheck hiding (Failure, Result, Success)
 import Text.Trifecta
 
 parseDigit :: Parser Char
@@ -25,55 +25,45 @@ positiveOrNegativeInteger = do
   number <- base10Integer
   return $ scale * number
 
-maybeSuccess :: Result a -> Maybe a
-maybeSuccess (Success a) = Just a
-maybeSuccess _ = Nothing
+runTest :: (Eq a, Show a) => Parser a -> String -> Maybe a -> Expectation
+runTest parser input output =
+  case (parseString parser mempty input, output) of
+    (Success a, Just value) -> a `shouldBe` value
+    (Success a, Nothing) -> expectationFailure $ "Parsing " ++ input ++ " should have failed, instead produced " ++ show a
+    (Failure error, Just _) -> expectationFailure $ "Parse should have succeeded: " ++ show error
+    (Failure error, Nothing) -> return ()
 
 main :: IO ()
 main = hspec $ do
   describe "parseDigit" $ do
+    let test = runTest parseDigit
     it "should parse a single digit" $ do
-      let m = parseString parseDigit mempty "123"
-          r = maybeSuccess m
-      r `shouldBe` (Just '1')
+      test "123" (Just '1')
+
     it "should not parse non-digits" $ do
-      let m = parseString parseDigit mempty "a23"
-          r = maybeSuccess m
-      r `shouldBe` Nothing
+      test "a23" Nothing
 
   describe "base10Integer" $ do
+    let test = runTest base10Integer
     it "should parse strings that are entirely digits" $ do
-      let m = parseString base10Integer mempty "123"
-          r = maybeSuccess m
-      r `shouldBe` (Just 123)
+      test "123" (Just 123)
 
     it "should consume a string that is partially a positive integer" $ do
-      let m = parseString base10Integer mempty "321abc"
-          r = maybeSuccess m
-      r `shouldBe` (Just 321)
+      test "321abc" (Just 321)
 
     it "should parse very large numbers" $ do
-      let m = parseString base10Integer mempty "999999999999999999999999999999999999999999"
-          r = maybeSuccess m
-      r `shouldBe` (Just 999999999999999999999999999999999999999999)
+      test "999999999999999999999999999999999999999999" (Just 999999999999999999999999999999999999999999)
 
     it "should not parse negative numbers" $ do
-      let m = parseString base10Integer mempty "-1"
-          r = maybeSuccess m
-      r `shouldBe` Nothing
+      test "-1" Nothing
 
   describe "positiveOrNegativeInteger" $ do
+    let test = runTest positiveOrNegativeInteger
     it "should parse positive numbers" $ do
-      let m = parseString positiveOrNegativeInteger mempty "123"
-          r = maybeSuccess m
-      r `shouldBe` (Just 123)
+      test "123" (Just 123)
 
     it "should parse negative numbers" $ do
-      let m = parseString positiveOrNegativeInteger mempty "-123"
-          r = maybeSuccess m
-      r `shouldBe` (Just (-123))
+      test "-123" (Just (-123))
 
     it "should only allow a single hyphen" $ do
-      let m = parseString positiveOrNegativeInteger mempty "--123"
-          r = maybeSuccess m
-      r `shouldBe` Nothing
+      test "--123" Nothing
