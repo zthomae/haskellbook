@@ -2,7 +2,7 @@ module LogParser where
 
 import Control.Applicative
 import Data.Char (digitToInt)
-import Data.List (foldl')
+import Data.List (foldl', intercalate)
 import qualified Data.Map.Strict as M
 import Data.Ord
 import Test.Hspec
@@ -14,14 +14,14 @@ type Hour = Int
 type Minute = Int
 data Timestamp = Timestamp Hour Minute deriving (Eq, Ord, Show)
 type Activity = String
-type Entries = [(Timestamp, Activity)]
+type Entry = (Timestamp, Activity)
 
 type Year = Int
 type Month = Int
 type Day = Int
 data Date = Date Year Month Day deriving (Eq, Ord, Show)
 
-type Log = M.Map Date Entries
+type Log = M.Map Date [Entry]
 
 sumDigits :: [Char] -> Int
 sumDigits = fromIntegral . (foldl' (\ n c -> (n * 10) + (toInteger (digitToInt c))) 0)
@@ -68,8 +68,15 @@ parseDateLine = do
   char '-'
   day <- count 2 digit
   optional (try parseComment)
-  isFollowedByOrEof $ char '\n'
+  isFollowedByOrEof newline
   return $ Date (sumDigits year) (sumDigits month) (sumDigits day)
+
+parseDayList :: Parser (Date, [Entry])
+parseDayList = do
+  date <- parseDateLine
+  newline
+  entries <- sepEndBy parseEntry newline
+  return (date, entries)
 
 runTest :: (Eq a, Show a) => Parser a -> String -> Maybe a -> Expectation
 runTest parser input output =
@@ -153,3 +160,19 @@ main = hspec $ do
             newline
             return date
       runTest dateAndNewline "# 2025-02-05\n" $ Just (Date 2025 2 5)
+
+  describe "parseDayList" $ do
+    let test = runTest parseDayList
+
+    it "should parse a day list with one entry not ending in newline" $ do
+      test "# 2025-02-05\n22:00 Sleep" $ Just (Date 2025 2 5, [(Timestamp 22 0, "Sleep")])
+
+    it "should parse a day list with one entry ending in newline" $ do
+      test "# 2025-02-05\n22:00 Sleep\n" $ Just (Date 2025 2 5, [(Timestamp 22 0, "Sleep")])
+
+    it "should parse a day list with more than one entry not ending in newline" $ do
+      let date = "# 2025-02-05"
+      let activity1 = "22:00 Sleep -- comment"
+      let activity2 = "22:30 More sleep"
+      let expected = (Date 2025 2 5, [(Timestamp 22 0, "Sleep"), (Timestamp 22 30, "More sleep")])
+      test (intercalate "\n" [date, activity1, activity2]) (Just expected)
