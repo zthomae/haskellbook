@@ -78,6 +78,11 @@ parseDayList = do
   entries <- sepEndBy parseEntry newline
   return (date, entries)
 
+parseLog :: Parser Log
+parseLog = do
+  days <- sepEndBy parseDayList newline
+  return $ M.fromList days
+
 runTest :: (Eq a, Show a) => Parser a -> String -> Maybe a -> Expectation
 runTest parser input output =
   case (parseString parser mempty input, output) of
@@ -176,3 +181,23 @@ main = hspec $ do
       let activity2 = "22:30 More sleep"
       let expected = (Date 2025 2 5, [(Timestamp 22 0, "Sleep"), (Timestamp 22 30, "More sleep")])
       test (intercalate "\n" [date, activity1, activity2]) (Just expected)
+
+  describe "parseLog" $ do
+    let test = runTest parseLog
+
+    it "should parse a basic log" $ do
+      let date1 = "# 2025-02-05"
+      let activity1 = "22:00 Sleep -- comment"
+      let activity2 = "22:30 More sleep\n"
+      let day1 = intercalate "\n" [date1, activity1, activity2]
+      let date2 = "# 2025-02-06"
+      let activity3 = "10:00 Wake up"
+      let activity4 = "11:00 Go back to sleep"
+      let day2 = intercalate "\n" [date2, activity3, activity4]
+      let log = intercalate "\n" [day1, day2]
+      let expected =
+            M.fromList
+            [ (Date 2025 2 5, [(Timestamp 22 0, "Sleep"), (Timestamp 22 30, "More sleep")])
+            , (Date 2025 2 6, [(Timestamp 10 0, "Wake up"), (Timestamp 11 0, "Go back to sleep")])
+            ]
+      test log (Just expected)
