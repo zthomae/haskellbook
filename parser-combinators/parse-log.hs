@@ -4,6 +4,7 @@ import Control.Applicative
 import Data.Char (digitToInt)
 import Data.List (foldl', intercalate)
 import qualified Data.Map.Strict as M
+import Data.Maybe (catMaybes)
 import Data.Ord
 import Test.Hspec
 import Test.QuickCheck hiding (Failure, Result, Success)
@@ -41,6 +42,9 @@ parseComment = do
   some (noneOf "\n")
   return ()
 
+parseCommentOrNewlineOrEof :: Parser ()
+parseCommentOrNewlineOrEof = (try parseComment <|> (isFollowedByOrEof $ char '\n'))
+
 parseTimestamp :: Parser Timestamp
 parseTimestamp = do
   hour <- count 2 digit
@@ -50,7 +54,7 @@ parseTimestamp = do
 
 -- I question whether this is a good idea...
 parseActivity :: Parser Activity
-parseActivity = manyTill (noneOf "\n") (try parseComment <|> (isFollowedByOrEof $ char '\n'))
+parseActivity = manyTill (noneOf "\n") parseCommentOrNewlineOrEof
 
 parseEntry :: Parser (Timestamp, Activity)
 parseEntry = do
@@ -58,6 +62,9 @@ parseEntry = do
   char ' '
   activity <- parseActivity
   return (ts, activity)
+
+parseMaybeEntry :: Parser (Maybe (Timestamp, Activity))
+parseMaybeEntry = (Just <$> (try parseEntry)) <|> (parseComment >> return Nothing)
 
 parseDateLine :: Parser Date
 parseDateLine = do
@@ -75,13 +82,16 @@ parseDayList :: Parser (Date, [Entry])
 parseDayList = do
   date <- parseDateLine
   newline
-  entries <- sepEndBy parseEntry newline
-  return (date, entries)
+  entries <- sepEndBy parseMaybeEntry newline
+  return (date, catMaybes entries)
+
+parseMaybeDayList :: Parser (Maybe (Date, [Entry]))
+parseMaybeDayList = (Just <$> (try parseDayList)) <|> (parseCommentOrNewlineOrEof >> return Nothing)
 
 parseLog :: Parser Log
 parseLog = do
-  days <- sepEndBy parseDayList newline
-  return $ M.fromList days
+  days <- sepEndBy parseMaybeDayList newline
+  return $ M.fromList (catMaybes days)
 
 runTest :: (Eq a, Show a) => Parser a -> String -> Maybe a -> Expectation
 runTest parser input output =
@@ -194,6 +204,32 @@ main = hspec $ do
       let activity3 = "10:00 Wake up"
       let activity4 = "11:00 Go back to sleep"
       let day2 = intercalate "\n" [date2, activity3, activity4]
+      let log = intercalate "\n" [day1, day2]
+      let expected =
+            M.fromList
+            [ (Date 2025 2 5, [(Timestamp 22 0, "Sleep"), (Timestamp 22 30, "More sleep")])
+            , (Date 2025 2 6, [(Timestamp 10 0, "Wake up"), (Timestamp 11 0, "Go back to sleep")])
+            ]
+      test log (Just expected)
+
+    it "should parse a log with a comment line" $ do
+      let date1 = "# 2025-02-05"
+      let activity1 = "22:00 Sleep -- comment"
+      let activity2 = "22:30 More sleep\n"
+      let log = intercalate "\n" ["-- hello", "", date1, activity1, activity2, "-- another one"]
+      let expected =
+            M.fromList [ (Date 2025 2 5, [(Timestamp 22 0, "Sleep"), (Timestamp 22 30, "More sleep")]) ]
+      test log (Just expected)
+
+    it "should parse a log with comments inside the day lists" $ do
+      let date1 = "# 2025-02-05"
+      let activity1 = "22:00 Sleep -- comment"
+      let activity2 = "22:30 More sleep\n"
+      let day1 = intercalate "\n" [date1, activity1, "-- comment", activity2]
+      let date2 = "# 2025-02-06"
+      let activity3 = "10:00 Wake up"
+      let activity4 = "11:00 Go back to sleep"
+      let day2 = intercalate "\n" [date2, "-- another comment", activity3, activity4]
       let log = intercalate "\n" [day1, day2]
       let expected =
             M.fromList
