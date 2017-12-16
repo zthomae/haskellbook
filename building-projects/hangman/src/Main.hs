@@ -1,6 +1,6 @@
 module Main where
 
-import Control.Monad (forever)
+import Control.Monad (forever, when)
 import Data.Char (toLower)
 import Data.Maybe (fromMaybe, isJust)
 import Data.List (intersperse)
@@ -36,11 +36,11 @@ randomWord wl = do
 randomWord' :: IO String
 randomWord' = gameWords >>= randomWord
 
-data Puzzle = Puzzle String [Maybe Char] [Char]
+data Puzzle = Puzzle String [Maybe Char] String
 
 instance Show Puzzle where
   show (Puzzle _ discovered guessed) =
-    (intersperse ' ' $ fmap renderPuzzleChar discovered)
+    intersperse ' ' (fmap renderPuzzleChar discovered)
     ++ " Guessed so far: " ++ guessed
 
 renderPuzzleChar :: Maybe Char -> Char
@@ -50,10 +50,10 @@ freshPuzzle :: String -> Puzzle
 freshPuzzle word = Puzzle word (map (const (Nothing :: Maybe Char)) word) []
 
 charInWord :: Puzzle -> Char -> Bool
-charInWord (Puzzle word _ _) char = elem char word
+charInWord (Puzzle word _ _) char = char `elem` word
 
 alreadyGuessed :: Puzzle -> Char -> Bool
-alreadyGuessed (Puzzle _ _ guessed) char = elem char guessed
+alreadyGuessed (Puzzle _ _ guessed) char = char `elem` guessed
 
 fillInCharacter :: Puzzle -> Char -> Puzzle
 fillInCharacter (Puzzle word filledInSoFar s) c =
@@ -84,18 +84,16 @@ handleGuess puzzle guess = do
 
 gameOver :: Puzzle -> IO ()
 gameOver (Puzzle wordToGuess _ guessed) =
-  if (length guessed) > 7 then
-    do putStrLn "You lose!"
-       putStrLn $ "The word was: " ++ wordToGuess
-       exitSuccess
-  else return ()
+  when (length guessed > 7) $ do
+    putStrLn "You lose!"
+    putStrLn $ "The word was: " ++ wordToGuess
+    exitSuccess
 
 gameWin :: Puzzle -> IO ()
 gameWin (Puzzle _ filledInSoFar _) =
-  if all isJust filledInSoFar then
-    do putStrLn "You win!"
-       exitSuccess
-  else return ()
+  when (all isJust filledInSoFar) $ do
+    putStrLn "You win!"
+    exitSuccess
 
 runGame :: Puzzle -> IO ()
 runGame puzzle = forever $ do
