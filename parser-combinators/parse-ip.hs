@@ -1,8 +1,8 @@
-module Ipv4Parser where
+module IpParser where
 
 import Data.Bits ((.&.))
 import Data.Char (chr, digitToInt, ord)
-import Data.List (foldl', intercalate)
+import Data.List (foldl', intercalate, partition)
 import Data.Maybe (catMaybes)
 import Data.Ord
 import Data.Word
@@ -79,7 +79,38 @@ hextet = do
         else return (Hextet $ fromIntegral sum)
 
 hextets :: Parser [Hextet]
-hextets = sepBy hextet (char ':')
+hextets = sepBy1 hextet (try $ char ':' <* notFollowedBy (char ':'))
+
+data Piece = Hextets [Hextet] | Gap deriving (Eq, Ord, Show)
+
+gap :: Parser Piece
+gap = do
+  string "::"
+  return Gap
+
+pieces :: Parser [Piece]
+pieces = some (choice [Hextets <$> hextets, gap])
+
+normalizeHextets :: [Hextet] -> [Hextet] -> ([Hextet], [Hextet])
+normalizeHextets before after
+  | length before > 4 = ((take 4 before), (join (drop 4 before) after))
+  | length after > 4 = ((join before (take (length after - 4) after)), (drop (length after - 4) after))
+  | otherwise = (extend before, extend after)
+    where extend xs = replicate (4 - length xs) (Hextet 0) ++ xs
+          join xs ys = xs ++ (replicate (4 - length xs - length ys) (Hextet 0)) ++ ys
+          takeRight n xs = drop (length xs - n) xs
+          dropRight n xs = take (length xs - n) xs
+
+ipv6 :: Parser IPAddress6
+ipv6 = do
+  ps <- pieces
+  let (gs, hs) = partition ((==) Gap) ps
+  let gapSize = 8 - length hs
+  if length gs > 1
+    then fail "An IPv6 address can only be abbreviated with :: once"
+    else if (length gs == 0 && gapSize > 1) || (gapSize < 0)
+      then fail "An IPv6 address must have 8 hextets"
+      else undefined
 
 runTest :: (Eq a, Show a) => Parser a -> String -> Maybe a -> Expectation
 runTest parser input output =
@@ -125,7 +156,47 @@ main = hspec $ do
   describe "hextets" $ do
     let test = runTest hextets
 
-    it "should parse 0:0" $ test "0:0" $ Just [Hextet 0, Hextet 0]
-    it "should parse 0:ffff" $ test "0:ffff" $ Just [Hextet 0, Hextet $ fromIntegral (2^16 - 1)]
+    it "should parse 0" $ test "0" $ Just $ [Hextet 0]
+    it "should parse 0:0" $ test "0:0" $ Just $ [Hextet 0, Hextet 0]
+    it "should parse 0:ffff" $ test "0:ffff" $ Just $ [Hextet 0, Hextet $ fromIntegral (2^16 - 1)]
 
     it "should not parse 0:g" $ test "0:g" $ Nothing
+
+  describe "gap" $ do
+    let test = runTest gap
+
+    it "should parse ::" $ test "::" $ Just Gap
+
+  describe "pieces" $ do
+    let test = runTest pieces
+
+    it "should parse 0::0" $ test "0::0" $ Just [Hextets [Hextet 0], Gap, Hextets [Hextet 0]]
+    it "should parse ::" $ test "::" $ Just [Gap]
+    it "should parse 0:0:0:0::" $ test "0:0:0:0::" $ Just [Hextets [Hextet 0, Hextet 0, Hextet 0, Hextet 0], Gap]
+
+  describe "normalizeHextets" $ do
+    it "should expand the first hextet" $
+      normalizeHextets [Hextet 0, Hextet 0, Hextet 0]
+                       [Hextet 0, Hextet 0, Hextet 0]
+      `shouldBe`
+      ([Hextet 0, Hextet 0, Hextet 0, Hextet 0], [Hextet 0, Hextet 0, Hextet 0, Hextet 0])
+    it "should expand the second hextet" $
+      normalizeHextets ([Hextet 0, Hextet 0, Hextet 0, Hextet 0]) ([Hextet 0, Hextet 0, Hextet 0])
+      `shouldBe`
+      ([Hextet 0, Hextet 0, Hextet 0, Hextet 0], [Hextet 0, Hextet 0, Hextet 0, Hextet 0])
+    it "should move hextets from the first list to the second" $
+      normalizeHextets ([Hextet 1, Hextet 2, Hextet 3, Hextet 4, Hextet 5]) ([Hextet 6, Hextet 7])
+      `shouldBe`
+      ([Hextet 1, Hextet 2, Hextet 3, Hextet 4], [Hextet 5, Hextet 0, Hextet 6, Hextet 7])
+    it "should move hextets from the second list to the first" $
+      normalizeHextets ([Hextet 1, Hextet 2]) ([Hextet 3, Hextet 4, Hextet 5, Hextet 6, Hextet 7])
+      `shouldBe`
+      ([Hextet 1, Hextet 2, Hextet 0, Hextet 3], [Hextet 4, Hextet 5, Hextet 6, Hextet 7])
+
+  describe "ipv6" $ do
+    let test = runTest ipv6
+
+    it "should not parse ::::" $ test "::::" $ Nothing
+    it "should not parse 0:0::0:0::0" $ test "0:0::0:0::0" $ Nothing
+    it "should not parse 0:0:0:0:0:0:0" $ test "0:0:0:0:0:0:0" $ Nothing
+    it "should not parse 0:0:0:0:0:0:0:0:0" $ test "0:0:0:0:0:0:0:0:0" $ Nothing
