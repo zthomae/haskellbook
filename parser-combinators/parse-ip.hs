@@ -61,7 +61,7 @@ hexToInt c
 
 hex :: Parser Int
 hex = do
-  c <- oneOf $ ['0'..'9'] ++ ['a'..'f'] ++ ['A'..'F']
+  c <- alphaNum
   case hexToInt c of
     Just n -> return n
     Nothing -> fail $ "not a valid hex digit: " ++ [c]
