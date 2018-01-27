@@ -91,8 +91,8 @@ gap = do
 pieces :: Parser [Piece]
 pieces = some (choice [Hextets <$> hextets, gap])
 
-normalizeHextets :: [Hextet] -> [Hextet] -> ([Hextet], [Hextet])
-normalizeHextets before after
+normalizeHextets :: ([Hextet], [Hextet]) -> ([Hextet], [Hextet])
+normalizeHextets (before, after)
   | length before > 4 = ((take 4 before), (join (drop 4 before) after))
   | length after > 4 = ((join before (take (length after - 4) after)), (drop (length after - 4) after))
   | otherwise = (extend before, extend after)
@@ -101,16 +101,32 @@ normalizeHextets before after
           takeRight n xs = drop (length xs - n) xs
           dropRight n xs = take (length xs - n) xs
 
+toHextets :: [Piece] -> [Hextet]
+toHextets ps = foldl' combine [] ps
+  where combine acc Gap = acc
+        combine acc (Hextets hs) = acc ++ hs
+
+toHextets2 :: [Piece] -> ([Hextet], [Hextet])
+toHextets2 (Gap:(Hextets hs:[])) = ([], hs)
+toHextets2 (Hextets hs:[]) = (hs, [])
+toHextets2 (Hextets hs:(Gap:[])) = (hs, [])
+toHextets2 (Hextets hs:(Gap:(Hextets hs':[]))) = (hs, hs')
+
+sumHextets :: [Hextet] -> Word64
+sumHextets = foldl' (\acc (Hextet next) -> (acc * 2^16) + (fromIntegral next)) (fromIntegral 0)
+
+-- TODO: conditions should be monadic
 ipv6 :: Parser IPAddress6
 ipv6 = do
   ps <- pieces
   let (gs, hs) = partition ((==) Gap) ps
-  let gapSize = 8 - length hs
+  let gapNeeded = 8 - length (toHextets ps)
   if length gs > 1
     then fail "An IPv6 address can only be abbreviated with :: once"
-    else if (length gs == 0 && gapSize > 1) || (gapSize < 0)
+    else if (length gs == 0 && gapNeeded > 0) || (gapNeeded < 0)
       then fail "An IPv6 address must have 8 hextets"
-      else undefined
+      else let (first, rest) = normalizeHextets $ toHextets2 ps
+             in return $ IPAddress6 (sumHextets first) (sumHextets rest)
 
 runTest :: (Eq a, Show a) => Parser a -> String -> Maybe a -> Expectation
 runTest parser input output =
@@ -149,6 +165,7 @@ main = hspec $ do
     it "should parse 0" $ test "0" $ Just (Hextet 0)
     it "should parse 000" $ test "000" $ Just (Hextet 0)
     it "should parse FF" $ test "FF" $ Just (Hextet 255)
+    it "should parse f" $ test "f" $ Just (Hextet 15)
 
     it "should not parse fffff" $ test "fffff" $ Nothing
     it "should not parse 0000a" $ test "0000a" $ Nothing
@@ -158,7 +175,8 @@ main = hspec $ do
 
     it "should parse 0" $ test "0" $ Just $ [Hextet 0]
     it "should parse 0:0" $ test "0:0" $ Just $ [Hextet 0, Hextet 0]
-    it "should parse 0:ffff" $ test "0:ffff" $ Just $ [Hextet 0, Hextet $ fromIntegral (2^16 - 1)]
+    it "should parse 0:ffff" $ test "0:ffff" $ Just $ [Hextet 0, Hextet 65535]
+    it "should parse 0:0:0:0:0:ffff:ac10:fe01" $ test "0:0:0:0:0:ffff:ac10:fe01" $ Just [Hextet 0, Hextet 0, Hextet 0, Hextet 0, Hextet 0, Hextet 65535, Hextet 44048, Hextet 65025]
 
     it "should not parse 0:g" $ test "0:g" $ Nothing
 
@@ -176,20 +194,19 @@ main = hspec $ do
 
   describe "normalizeHextets" $ do
     it "should expand the first hextet" $
-      normalizeHextets [Hextet 0, Hextet 0, Hextet 0]
-                       [Hextet 0, Hextet 0, Hextet 0]
+      normalizeHextets ([Hextet 0, Hextet 0, Hextet 0], [Hextet 0, Hextet 0, Hextet 0])
       `shouldBe`
       ([Hextet 0, Hextet 0, Hextet 0, Hextet 0], [Hextet 0, Hextet 0, Hextet 0, Hextet 0])
     it "should expand the second hextet" $
-      normalizeHextets ([Hextet 0, Hextet 0, Hextet 0, Hextet 0]) ([Hextet 0, Hextet 0, Hextet 0])
+      normalizeHextets ([Hextet 0, Hextet 0, Hextet 0, Hextet 0], [Hextet 0, Hextet 0, Hextet 0])
       `shouldBe`
       ([Hextet 0, Hextet 0, Hextet 0, Hextet 0], [Hextet 0, Hextet 0, Hextet 0, Hextet 0])
     it "should move hextets from the first list to the second" $
-      normalizeHextets ([Hextet 1, Hextet 2, Hextet 3, Hextet 4, Hextet 5]) ([Hextet 6, Hextet 7])
+      normalizeHextets ([Hextet 1, Hextet 2, Hextet 3, Hextet 4, Hextet 5], [Hextet 6, Hextet 7])
       `shouldBe`
       ([Hextet 1, Hextet 2, Hextet 3, Hextet 4], [Hextet 5, Hextet 0, Hextet 6, Hextet 7])
     it "should move hextets from the second list to the first" $
-      normalizeHextets ([Hextet 1, Hextet 2]) ([Hextet 3, Hextet 4, Hextet 5, Hextet 6, Hextet 7])
+      normalizeHextets ([Hextet 1, Hextet 2], [Hextet 3, Hextet 4, Hextet 5, Hextet 6, Hextet 7])
       `shouldBe`
       ([Hextet 1, Hextet 2, Hextet 0, Hextet 3], [Hextet 4, Hextet 5, Hextet 6, Hextet 7])
 
@@ -200,3 +217,10 @@ main = hspec $ do
     it "should not parse 0:0::0:0::0" $ test "0:0::0:0::0" $ Nothing
     it "should not parse 0:0:0:0:0:0:0" $ test "0:0:0:0:0:0:0" $ Nothing
     it "should not parse 0:0:0:0:0:0:0:0:0" $ test "0:0:0:0:0:0:0:0:0" $ Nothing
+
+    it "should parse 0:0:0:0:0:ffff:ac10:fe01" $ test "0:0:0:0:0:ffff:ac10:fe01" $ Just (IPAddress6 0 281473568538113)
+    it "should parse 0:0:0:0:0:ffff:cc78:f" $ test "0:0:0:0:0:ffff:cc78:f" $ Just (IPAddress6 0 281474112159759)
+    it "should parse FE80:0000:0000:0000:0202:B3FF:FE1E:8329" $ test "FE80:0000:0000:0000:0202:B3FF:FE1E:8329" $ Just (IPAddress6 18338657682652659712 144876050090722089)
+    it "should parse 2001:DB8:0:0:8:800:200C:417A" $ test "2001:DB8:0:0:8:800:200C:417A" $ Just (IPAddress6 2306139568115548160 2260596444381562)
+    it "should parse FE80::0202:B3FF:FE1E:8329" $ test "FE80::0202:B3FF:FE1E:8329" $ Just (IPAddress6 18338657682652659712 144876050090722089)
+    it "should parse 2001:DB8::8:800:200C:417A" $ test "2001:DB8::8:800:200C:417A" $ Just (IPAddress6 2306139568115548160 2260596444381562)
