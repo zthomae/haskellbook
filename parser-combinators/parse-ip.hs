@@ -95,9 +95,8 @@ normalizeHextets :: ([Hextet], [Hextet]) -> ([Hextet], [Hextet])
 normalizeHextets (before, after)
   | length before > 4 = ((take 4 before), (join (drop 4 before) after))
   | length after > 4 = ((join before (take (length after - 4) after)), (drop (length after - 4) after))
-  | otherwise = (extend before, extend after)
-    where extend xs = replicate (4 - length xs) (Hextet 0) ++ xs
-          join xs ys = xs ++ (replicate (4 - length xs - length ys) (Hextet 0)) ++ ys
+  | otherwise = (before ++ replicate (4 - length before) (Hextet 0), replicate (4 - length after) (Hextet 0) ++  after)
+    where join xs ys = xs ++ (replicate (4 - length xs - length ys) (Hextet 0)) ++ ys
           takeRight n xs = drop (length xs - n) xs
           dropRight n xs = take (length xs - n) xs
 
@@ -209,6 +208,10 @@ main = hspec $ do
       normalizeHextets ([Hextet 1, Hextet 2], [Hextet 3, Hextet 4, Hextet 5, Hextet 6, Hextet 7])
       `shouldBe`
       ([Hextet 1, Hextet 2, Hextet 0, Hextet 3], [Hextet 4, Hextet 5, Hextet 6, Hextet 7])
+    it "should normalize ffff::" $
+      normalizeHextets ([Hextet 65535], [Hextet 0, Hextet 0, Hextet 0, Hextet 0])
+      `shouldBe`
+      ([Hextet 65535, Hextet 0, Hextet 0, Hextet 0], [Hextet 0, Hextet 0, Hextet 0, Hextet 0])
 
   describe "ipv6" $ do
     let test = runTest ipv6
