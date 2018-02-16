@@ -6,7 +6,6 @@ import Data.List (foldl', intercalate, partition)
 import Data.Maybe (catMaybes)
 import Data.Ord
 import Data.Word
-import Numeric (showHex)
 import Test.Hspec
 import Test.QuickCheck hiding ((.&.), Failure, Result, Success)
 import Text.Parser.LookAhead (lookAhead)
@@ -49,6 +48,18 @@ ipv4 = do
 
 data IPAddress6 = IPAddress6 Word64 Word64 deriving (Eq, Ord)
 
+showHex :: (Integral a, Show a) => a -> String
+showHex x =
+  let
+    (d, m) = divMod x 16
+    hexDigit d
+      | d > 9 = [chr $ (d - 10) + ord 'a']
+      | otherwise = show d
+  in
+    if d == 0
+    then hexDigit (fromIntegral m)
+    else (showHex d) ++ hexDigit (fromIntegral m)
+
 -- I really don't feel like simplifying the representations right now.
 instance Show IPAddress6 where
   show (IPAddress6 hi lo) =
@@ -60,7 +71,7 @@ instance Show IPAddress6 where
               three = (w64 .&. 0x00000000ffff0000) `div` 2^16
               four =  (w64 .&. 0x000000000000ffff)
             in
-              intercalate ":" [showHex one "", showHex two "", showHex three "", showHex four ""]
+              intercalate ":" [showHex one, showHex two, showHex three, showHex four]
 
 newtype Hextet = Hextet Word16 deriving (Eq, Ord, Show)
 
