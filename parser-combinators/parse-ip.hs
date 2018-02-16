@@ -6,6 +6,7 @@ import Data.List (foldl', intercalate, partition)
 import Data.Maybe (catMaybes)
 import Data.Ord
 import Data.Word
+import Numeric (showHex)
 import Test.Hspec
 import Test.QuickCheck hiding ((.&.), Failure, Result, Success)
 import Text.Parser.LookAhead (lookAhead)
@@ -46,9 +47,21 @@ ipv4 = do
   four <- octet
   return (IPAddress $ fromIntegral four + (fromIntegral three * (2^8) + (fromIntegral two * (2^16) + (fromIntegral one * (2^24)))))
 
-data IPAddress6 = IPAddress6 Word64 Word64 deriving (Eq, Ord, Show)
+data IPAddress6 = IPAddress6 Word64 Word64 deriving (Eq, Ord)
 
--- TODO: Write my own Show instance
+-- I really don't feel like simplifying the representations right now.
+instance Show IPAddress6 where
+  show (IPAddress6 hi lo) =
+    intercalate ":" [(f hi), (f lo)]
+    where f w64 =
+            let
+              one =   (w64 .&. 0xffff000000000000) `div` 2^48
+              two =   (w64 .&. 0x0000ffff00000000) `div` 2^32
+              three = (w64 .&. 0x00000000ffff0000) `div` 2^16
+              four =  (w64 .&. 0x000000000000ffff)
+            in
+              intercalate ":" [showHex one "", showHex two "", showHex three "", showHex four ""]
+
 newtype Hextet = Hextet Word16 deriving (Eq, Ord, Show)
 
 -- this is not very good
@@ -227,3 +240,9 @@ main = hspec $ do
     it "should parse 2001:DB8:0:0:8:800:200C:417A" $ test "2001:DB8:0:0:8:800:200C:417A" $ Just (IPAddress6 2306139568115548160 2260596444381562)
     it "should parse FE80::0202:B3FF:FE1E:8329" $ test "FE80::0202:B3FF:FE1E:8329" $ Just (IPAddress6 18338657682652659712 144876050090722089)
     it "should parse 2001:DB8::8:800:200C:417A" $ test "2001:DB8::8:800:200C:417A" $ Just (IPAddress6 2306139568115548160 2260596444381562)
+
+    it "should round trip all Word64s" $ property $ do
+      hi <- (arbitrary :: Gen Word64)
+      lo <- (arbitrary :: Gen Word64)
+      let ip = IPAddress6 hi lo
+      return $ test (show ip) (Just ip)
