@@ -1,7 +1,7 @@
 module IpParser where
 
 import Data.Bits ((.&.))
-import Data.Char (chr, digitToInt, ord)
+import Data.Char (chr, digitToInt, isDigit, ord)
 import Data.List (foldl', intercalate, partition)
 import Data.Maybe (catMaybes)
 import Data.Ord
@@ -27,7 +27,7 @@ octet :: Parser Word8
 octet = do
   first <- digit
   rest <- many digit
-  if (length (first:rest) > 3)
+  if length (first:rest) > 3
     then fail "octet can only be three characters long"
     else do
       let sum = foldl' (\b a -> b * 10 + a) 0 (digitToInt <$> (first:rest))
@@ -58,12 +58,12 @@ showHex x =
   in
     if d == 0
     then hexDigit (fromIntegral m)
-    else (showHex d) ++ hexDigit (fromIntegral m)
+    else showHex d ++ hexDigit (fromIntegral m)
 
 -- I really don't feel like simplifying the representations right now.
 instance Show IPAddress6 where
   show (IPAddress6 hi lo) =
-    intercalate ":" [(f hi), (f lo)]
+    intercalate ":" [f hi, f lo]
     where f w64 =
             let
               one =   (w64 .&. 0xffff000000000000) `div` 2^48
@@ -78,7 +78,7 @@ newtype Hextet = Hextet Word16 deriving (Eq, Ord, Show)
 -- this is not very good
 hexToInt :: Char -> Maybe Int
 hexToInt c
-  | c >= '0' && c <= '9' = Just $ ord c - ord '0'
+  | isDigit c = Just $ ord c - ord '0'
   | c >= 'a' && c <= 'f' = Just $ ord c - ord 'a' + 10
   | c >= 'A' && c <= 'F' = Just $ ord c - ord 'A' + 10
   | otherwise = Nothing
@@ -117,36 +117,34 @@ pieces = some (choice [Hextets <$> hextets, gap])
 
 normalizeHextets :: ([Hextet], [Hextet]) -> ([Hextet], [Hextet])
 normalizeHextets (before, after)
-  | length before > 4 = ((take 4 before), (join (drop 4 before) after))
-  | length after > 4 = ((join before (take (length after - 4) after)), (drop (length after - 4) after))
+  | length before > 4 = (take 4 before, join (drop 4 before) after)
+  | length after > 4 = (join before (take (length after - 4) after), drop (length after - 4) after)
   | otherwise = (before ++ replicate (4 - length before) (Hextet 0), replicate (4 - length after) (Hextet 0) ++  after)
-    where join xs ys = xs ++ (replicate (4 - length xs - length ys) (Hextet 0)) ++ ys
-          takeRight n xs = drop (length xs - n) xs
-          dropRight n xs = take (length xs - n) xs
+    where join xs ys = xs ++ replicate (4 - length xs - length ys) (Hextet 0) ++ ys
 
 toHextets :: [Piece] -> [Hextet]
-toHextets ps = foldl' combine [] ps
+toHextets = foldl' combine []
   where combine acc Gap = acc
         combine acc (Hextets hs) = acc ++ hs
 
 toHextets2 :: [Piece] -> ([Hextet], [Hextet])
-toHextets2 (Gap:(Hextets hs:[])) = ([], hs)
-toHextets2 (Hextets hs:[]) = (hs, [])
-toHextets2 (Hextets hs:(Gap:[])) = (hs, [])
-toHextets2 (Hextets hs:(Gap:(Hextets hs':[]))) = (hs, hs')
+toHextets2 [Gap, Hextets hs] = ([], hs)
+toHextets2 [Hextets hs] = (hs, [])
+toHextets2 [Hextets hs, Gap] = (hs, [])
+toHextets2 [Hextets hs, Gap, Hextets hs'] = (hs, hs')
 
 sumHextets :: [Hextet] -> Word64
-sumHextets = foldl' (\acc (Hextet next) -> (acc * 2^16) + (fromIntegral next)) (fromIntegral 0)
+sumHextets = foldl' (\acc (Hextet next) -> (acc * 2^16) + fromIntegral next) (fromIntegral 0)
 
 -- TODO: conditions should be monadic
 ipv6 :: Parser IPAddress6
 ipv6 = do
   ps <- pieces
-  let (gs, hs) = partition ((==) Gap) ps
+  let (gs, _) = partition (Gap ==) ps
   let gapNeeded = 8 - length (toHextets ps)
   if length gs > 1
     then fail "An IPv6 address can only be abbreviated with :: once"
-    else if (length gs == 0 && gapNeeded > 0) || (gapNeeded < 0)
+    else if (null gs && gapNeeded > 0) || (gapNeeded < 0)
       then fail "An IPv6 address must have 8 hextets"
       else let (first, rest) = normalizeHextets $ toHextets2 ps
              in return $ IPAddress6 (sumHextets first) (sumHextets rest)
@@ -168,7 +166,7 @@ main = hspec $ do
     it "should parse example 2" $ test "204.120.0.15" $ Just (IPAddress 3430416399)
 
     it "should round trip all Word32s" $ property $ do
-      w <- (arbitrary :: Gen Word32)
+      w <- arbitrary :: Gen Word32
       let ip = IPAddress w
       return $ test (show ip) (Just ip)
 
@@ -179,7 +177,7 @@ main = hspec $ do
     it "should parse example 2" $ test "0" $ Just 0
     it "should parse example 3" $ test "a" $ Just 10
 
-    it "should not parse example 4" $ test "g" $ Nothing
+    it "should not parse example 4" $ test "g" Nothing
 
   describe "hextet" $ do
     let test = runTest hextet
@@ -190,18 +188,18 @@ main = hspec $ do
     it "should parse FF" $ test "FF" $ Just (Hextet 255)
     it "should parse f" $ test "f" $ Just (Hextet 15)
 
-    it "should not parse fffff" $ test "fffff" $ Nothing
-    it "should not parse 0000a" $ test "0000a" $ Nothing
+    it "should not parse fffff" $ test "fffff" Nothing
+    it "should not parse 0000a" $ test "0000a" Nothing
 
   describe "hextets" $ do
     let test = runTest hextets
 
-    it "should parse 0" $ test "0" $ Just $ [Hextet 0]
-    it "should parse 0:0" $ test "0:0" $ Just $ [Hextet 0, Hextet 0]
-    it "should parse 0:ffff" $ test "0:ffff" $ Just $ [Hextet 0, Hextet 65535]
+    it "should parse 0" $ test "0" $ Just [Hextet 0]
+    it "should parse 0:0" $ test "0:0" $ Just [Hextet 0, Hextet 0]
+    it "should parse 0:ffff" $ test "0:ffff" $ Just [Hextet 0, Hextet 65535]
     it "should parse 0:0:0:0:0:ffff:ac10:fe01" $ test "0:0:0:0:0:ffff:ac10:fe01" $ Just [Hextet 0, Hextet 0, Hextet 0, Hextet 0, Hextet 0, Hextet 65535, Hextet 44048, Hextet 65025]
 
-    it "should not parse 0:g" $ test "0:g" $ Nothing
+    it "should not parse 0:g" $ test "0:g" Nothing
 
   describe "gap" $ do
     let test = runTest gap
@@ -240,10 +238,10 @@ main = hspec $ do
   describe "ipv6" $ do
     let test = runTest ipv6
 
-    it "should not parse ::::" $ test "::::" $ Nothing
-    it "should not parse 0:0::0:0::0" $ test "0:0::0:0::0" $ Nothing
-    it "should not parse 0:0:0:0:0:0:0" $ test "0:0:0:0:0:0:0" $ Nothing
-    it "should not parse 0:0:0:0:0:0:0:0:0" $ test "0:0:0:0:0:0:0:0:0" $ Nothing
+    it "should not parse ::::" $ test "::::" Nothing
+    it "should not parse 0:0::0:0::0" $ test "0:0::0:0::0" Nothing
+    it "should not parse 0:0:0:0:0:0:0" $ test "0:0:0:0:0:0:0" Nothing
+    it "should not parse 0:0:0:0:0:0:0:0:0" $ test "0:0:0:0:0:0:0:0:0" Nothing
 
     it "should parse 0:0:0:0:0:ffff:ac10:fe01" $ test "0:0:0:0:0:ffff:ac10:fe01" $ Just (IPAddress6 0 281473568538113)
     it "should parse 0:0:0:0:0:ffff:cc78:f" $ test "0:0:0:0:0:ffff:cc78:f" $ Just (IPAddress6 0 281474112159759)
@@ -253,7 +251,7 @@ main = hspec $ do
     it "should parse 2001:DB8::8:800:200C:417A" $ test "2001:DB8::8:800:200C:417A" $ Just (IPAddress6 2306139568115548160 2260596444381562)
 
     it "should round trip all Word64s" $ property $ do
-      hi <- (arbitrary :: Gen Word64)
-      lo <- (arbitrary :: Gen Word64)
+      hi <- arbitrary :: Gen Word64
+      lo <- arbitrary :: Gen Word64
       let ip = IPAddress6 hi lo
       return $ test (show ip) (Just ip)
