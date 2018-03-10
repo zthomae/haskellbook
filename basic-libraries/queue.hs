@@ -2,6 +2,7 @@ module Main where
 
 import Criterion.Main
 import Data.Maybe (fromJust)
+import qualified Data.Sequence as S
 
 data Queue a =
   Queue { enqueue :: [a]
@@ -63,22 +64,36 @@ queueBench shouldPush i = toList $ go 0 empty
           | n == i = acc
           | otherwise = go (n+1) (if shouldPush n then push n acc else snd (fromJust (pop acc)))
 
+sequenceBench :: (Int -> Bool) -> Int -> S.Seq Int
+sequenceBench shouldPush i = go 0 S.empty
+  where go n acc
+          | n == i = acc
+          | otherwise = go (n+1) (if shouldPush n then acc S.|> n else S.drop 1 acc)
+
 main :: IO ()
 main = defaultMain
   [ bench "list queue (scheme 1)" $
     whnf (listBench shouldPush1) 100
   , bench "our queue (scheme 1)" $
     whnf (queueBench shouldPush1) 100
+  , bench "sequence (scheme 1)" $
+    whnf (sequenceBench shouldPush1) 100
   , bench "list queue (scheme 2)" $
     whnf (listBench shouldPush2) 100
   , bench "our queue (scheme 2)" $
     whnf (queueBench shouldPush2) 100
+  , bench "sequence (scheme 2)" $
+    whnf (sequenceBench shouldPush2) 100
   , bench "list queue (scheme 3)" $
     whnf (listBench shouldPush3) 100
   , bench "our queue (scheme 3)" $
     whnf (queueBench shouldPush3) 100
+  , bench "sequence (scheme 3)" $
+    whnf (sequenceBench shouldPush3) 100
   , bench "list queue (scheme 4)" $
     whnf (listBench shouldPush4) 100
   , bench "our queue (scheme 4)" $
     whnf (queueBench shouldPush4) 100
+  , bench "sequence (scheme 4)" $
+    whnf (sequenceBench shouldPush4) 100
   ]
