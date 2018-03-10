@@ -1,4 +1,4 @@
-module DList where
+module Main where
 
 import Criterion.Main
 import qualified Data.DList as RealDL
