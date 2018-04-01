@@ -2,16 +2,32 @@ name:                fingerd
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            https://github.com/githubuser/fingerd#readme
+homepage:            https://github.com/zthomae/haskellbook
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2018 Author name here
+author:              Zach Thomae
+maintainer:          zach@thomae.co
+copyright:           2018 Zach Thomae
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:  README.md
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Finger.Model
+                       Finger.Network
+                       Finger.Queries
+                       Finger.Service
+  ghc-options:         -Wall
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
+                     , bytestring
+                     , mtl
+                     , network
+                     , raw-strings-qq
+                     , sqlite-simple
+                     , text
 
 executable debug
   ghc-options:         -Wall
@@ -26,9 +42,44 @@ executable fingerd
   hs-source-dirs:      src
   main-is:             Main.hs
   default-language:    Haskell2010
+  other-modules:       Finger.Model
+                     , Finger.Network
+                     , Finger.Queries
+                     , Finger.Service
   build-depends:       base >= 4.7 && < 5
                      , bytestring
+                     , mtl
                      , network
+                     , raw-strings-qq
+                     , sqlite-simple
+                     , text
+
+executable init
+  ghc-options:         -Wall
+  hs-source-dirs:      src
+  main-is:             Init.hs
+  default-language:    Haskell2010
+  other-modules:       Finger.Model
+                     , Finger.Queries
+                     , Finger.Service
+  build-depends:       base >= 4.7 && < 5
+                     , bytestring
+                     , mtl
+                     , raw-strings-qq
+                     , sqlite-simple
+                     , text
+
+executable userDb
+  ghc-options:         -Wall
+  hs-source-dirs:      src
+  main-is:             UserDb.hs
+  default-language:    Haskell2010
+  other-modules:       Finger.Model
+                     , Finger.Queries
+                     , Finger.Service
+  build-depends:       base >= 4.7 && < 5
+                     , bytestring
+                     , mtl
                      , raw-strings-qq
                      , sqlite-simple
                      , text
