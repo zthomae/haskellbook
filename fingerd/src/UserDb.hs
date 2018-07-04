@@ -1,11 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Main where
 
 import Prelude hiding (getLine, putStrLn)
 
-import Control.Monad.Except (runExceptT)
+import Control.Exception (try)
+import Control.Monad.Except (ExceptT(..), runExceptT)
 import Data.Monoid ((<>))
 import Data.Text.IO (getLine, putStrLn)
 import Database.SQLite.Simple hiding (bind, close)
@@ -13,7 +15,7 @@ import qualified Database.SQLite.Simple as SQLite
 import Database.SQLite.Simple.Types
 
 import Finger.Model (UserRow)
-import Finger.Service (addUser)
+import Finger.Queries (insertUser)
 
 -- TODO: Data validation would be nice here
 readUserInfo :: IO UserRow
@@ -29,6 +31,9 @@ readUserInfo = do
   putStrLn "What is the new user's phone number?"
   phone <- getLine
   return (Null, username, shell, home, fullName, phone)
+
+addUser :: UserRow -> Connection -> ExceptT SQLError IO ()
+addUser user dbConn = ExceptT (try $ SQLite.execute dbConn insertUser user)
 
 main :: IO ()
 main = do

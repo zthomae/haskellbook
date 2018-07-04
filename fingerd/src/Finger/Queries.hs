@@ -6,6 +6,7 @@ module Finger.Queries where
 
 import Control.Exception
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Typeable()
 import Database.SQLite.Simple (Connection, query, query_)
 import Database.SQLite.Simple.Types
@@ -37,7 +38,7 @@ instance Exception DuplicateData
 
 getUser :: Text -> Connection -> IO (Maybe User)
 getUser username conn = do
-  results <- query conn getUserQuery (Only username)
+  results <- query conn getUserQuery (Only (T.strip username))
   case results of
     [] -> return Nothing
     [user] -> return $ Just user

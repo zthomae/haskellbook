@@ -1,8 +1,11 @@
 module Main where
 
-import Database.SQLite.Simple (close, open)
+import Database.SQLite.Simple (Connection, close, execute_, open)
 
-import Finger.Service (createDatabase)
+import Finger.Queries (createUsers)
+
+createDatabase :: Connection -> IO ()
+createDatabase conn = execute_ conn createUsers
 
 main :: IO ()
 main = do
