@@ -8,11 +8,11 @@ import Control.Exception
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Typeable()
-import Database.SQLite.Simple (Connection, query, query_)
+import Database.SQLite.Simple (Connection, NamedParam((:=)), executeNamed, query, query_)
 import Database.SQLite.Simple.Types
 import Text.RawString.QQ
 
-import Finger.Model (User)
+import Finger.Model (User(..))
 
 createUsers :: Query
 createUsers = [r|
@@ -32,6 +32,10 @@ allUsers = "SELECT * FROM users"
 getUserQuery :: Query
 getUserQuery = "SELECT * FROM users WHERE username = ?"
 
+updateUserQuery :: Query
+updateUserQuery =
+  "UPDATE users SET username = :username, shell = :shell, homeDirectory = :homeDirectory, realName = :realName, phone = :phone where id = :id"
+
 data DuplicateData = DuplicateData deriving (Eq, Show)
 
 instance Exception DuplicateData
@@ -45,4 +49,16 @@ getUser username conn = do
     _ -> throwIO DuplicateData
 
 getUsers :: Connection -> IO [User]
-getUsers dbConn = query_ dbConn allUsers
+getUsers conn = query_ conn allUsers
+
+updateUser :: User -> Connection -> IO ()
+updateUser user conn = executeNamed conn updateUserQuery params
+  where
+    params =
+      [ ":id" := userId user
+      , ":username" := T.strip (username user)
+      , ":shell" := T.strip (shell user)
+      , ":homeDirectory" := T.strip (homeDirectory user)
+      , ":realName" := T.strip (realName user)
+      , ":phone" := T.strip (phone user)
+      ]
