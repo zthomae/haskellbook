@@ -53,6 +53,8 @@ executable fingerd
                      , raw-strings-qq
                      , sqlite-simple
                      , text
+                     , unix
+                     , vector
 
 executable init
   ghc-options:         -Wall
